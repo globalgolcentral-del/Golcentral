@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gol Central - Tu Centro Comercial Virtual</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+fondo: '#0A0E27',
+azulOscuro: '#16213E',
+azulMedio: '#0F3460',
+dorado: '#E94560',
+oro: '#FFD700',
+textoClaro: '#F1F2F6',
+},
+fontFamily: { sans: ['Inter', 'sans-serif'] },
+}
+}
+}
+</script>
+<style>
+/* ========== ESTILOS BASE ========== */
+.text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.card-shadow { box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+.scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scroll-hide::-webkit-scrollbar { display: none; }
+
+.btn-editar {
+background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.4);
+color: #FFD700; padding: 8px 16px; border-radius: 12px;
+font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+}
+.btn-editar:hover { background: rgba(255,215,0,0.3); border-color: #FFD700; }
+
+.btn-eliminar {
+background: rgba(233,69,96,0.15); border: 1px solid rgba(233,69,96,0.4);
+color: #E94560; padding: 8px 16px; border-radius: 12px;
+font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s;
+}
+.btn-eliminar:hover { background: rgba(233,69,96,0.3); border-color: #E94560; }
+
+.btn-guardar {
+background: #FFD700; color: #0A0E27; padding: 12px 24px;
+border-radius: 12px; font-size: 16px; font-weight: 700;
+cursor: pointer; border: none; width: 100%; transition: all 0.3s;
+}
+.btn-guardar:hover { background: #FFC000; transform: scale(1.02); }
+
+.btn-informe {
+background: linear-gradient(135deg, #FFD700, #FFA500); color: #0A0E27;
+padding: 16px 32px; border-radius: 16px; font-size: 18px;
+font-weight: 800; cursor: pointer; border: 2px solid #FFD700;
+width: 100%; transition: all 0.3s; box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+}
+.btn-informe:hover { background: linear-gradient(135deg, #FFC000, #FF8C00); transform: scale(1.03); }
+
+.modal-overlay {
+position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0,0,0,0.8); z-index: 50;
+display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.modal-contenido {
+background: #16213E; border: 2px solid rgba(255,215,0,0.3);
+border-radius: 20px; padding: 24px; width: 100%; max-width: 500px;
+max-height: 80vh; overflow-y: auto;
+}
+.modal-informe {
+background: #16213E; border: 2px solid #FFD700;
+border-radius: 20px; padding: 24px; width: 100%; max-width: 650px;
+max-height: 85vh; overflow-y: auto;
+}
+
+.estado-al-dia { background: #10B981; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+.estado-deuda { background: #F59E0B; color: #0A0E27; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+.estado-bloqueado { background: #EF4444; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+.estado-vacante { background: #6B7280; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+
+.input-form {
+width: 100%; background: #0A0E27; border: 1px solid #374151;
+border-radius: 10px; padding: 10px 14px; color: #F1F2F6;
+font-size: 14px; margin-bottom: 8px;
+}
+.input-form:focus { outline: none; border-color: #FFD700; }
+select.input-form {
+appearance: none;
+background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FFD700' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+}
+
+.toast {
+position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+background: #16213E; border: 2px solid #FFD700; color: #F1F2F6;
+padding: 14px 24px; border-radius: 12px; font-size: 14px; font-weight: 600;
+z-index: 100; opacity: 0; transition: opacity 0.3s;
+box-shadow: 0 8px 25px rgba(0,0,0,0.5); text-align: center; max-width: 90vw;
+}
+.toast.show { opacity: 1; }
+.toast.success { border-color: #10B981; }
+.toast.error { border-color: #EF4444; }
+.toast.warning { border-color: #F59E0B; }
+
+.informe-texto {
+background: #0A0E27; border: 1px solid #374151; border-radius: 12px;
+padding: 16px; color: #F1F2F6; font-family: 'Courier New', monospace;
+font-size: 13px; line-height: 1.6; white-space: pre-wrap;
+max-height: 50vh; overflow-y: auto;
+}
+.btn-copiar {
+background: #10B981; color: white; padding: 12px 24px;
+border-radius: 12px; font-size: 16px; font-weight: 700;
+cursor: pointer; border: none; width: 100%; transition: all 0.3s; margin-top: 8px;
+}
+.btn-copiar:hover { background: #059669; transform: scale(1.02); }
+.btn-copiar.copiado { background: #6366F1; }
+
+.local-bloqueado-overlay {
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(0,0,0,0.75); display: flex; align-items: center;
+justify-content: center; border-radius: 12px; z-index: 5;
+color: #EF4444; font-weight: 800; font-size: 16px; text-align: center;
+pointer-events: none; flex-direction: column;
+}
+
+.placeholder-img {
+width: 100%; min-height: 100px;
+background: linear-gradient(135deg, #0F3460, #16213E);
+display: flex; align-items: center; justify-content: center;
+border-radius: 8px; color: #FFD700; font-weight: 700;
+font-size: 13px; text-align: center; padding: 10px; flex-direction: column;
+}
+
+.buscador-global {
+position: sticky; top: 60px; z-index: 9;
+background: #0A0E27; padding: 10px 16px; border-bottom: 1px solid rgba(255,215,0,0.2);
+}
+.buscador-global input {
+width: 100%; background: #16213E; border: 1px solid #374151;
+border-radius: 25px; padding: 10px 20px; color: #F1F2F6; font-size: 14px;
+}
+.buscador-global input:focus { outline: none; border-color: #FFD700; }
+.resultado-busqueda {
+background: #16213E; border-radius: 12px; padding: 12px; margin-top: 8px;
+border-left: 3px solid #FFD700; cursor: pointer; transition: all 0.2s;
+}
+.resultado-busqueda:hover { background: #0F3460; }
+.etiqueta-pais {
+background: rgba(255,215,0,0.2); color: #FFD700;
+padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700;
+}
+
+.paginacion-btn {
+background: #0F3460; color: #F1F2F6; padding: 8px 14px;
+border-radius: 8px; font-size: 13px; font-weight: 600;
+cursor: pointer; border: 1px solid #374151; transition: all 0.2s;
+}
+.paginacion-btn:hover { background: #16213E; border-color: #FFD700; }
+.paginacion-btn.activo { background: #FFD700; color: #0A0E27; border-color: #FFD700; }
+.paginacion-btn.desactivado { opacity: 0.4; pointer-events: none; }
+
+.filtro-btn {
+padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+cursor: pointer; border: 1px solid #374151; background: #0A0E27; color: #9CA3AF;
+transition: all 0.2s; white-space: nowrap;
+}
+.filtro-btn.activo { background: #FFD700; color: #0A0E27; border-color: #FFD700; }
+
+.historial-item {
+background: #0A0E27; border-left: 3px solid #FFD700;
+padding: 10px 14px; border-radius: 8px; margin-bottom: 6px; font-size: 12px;
+}
+</style>
+</head>
+<body class="bg-fondo text-textoClaro font-sans min-h-screen">
+
+<!-- ========== TOAST ========== -->
+<div id="toast" class="toast"></div>
+
+<!-- ========== PANTALLA DE INICIO ========== -->
+<section id="pantalla-inicio" class="min-h-screen flex flex-col items-center justify-center px-6 py-10">
+<div class="w-full max-w-md text-center mb-8">
+<h1 class="text-[clamp(2.5rem,8vw,4rem)] font-bold text-oro mb-3 text-shadow">GOL CENTRAL</h1>
+<p class="text-[clamp(1rem,3vw,1.2rem)] text-gray-300">Tu mundo de compras, todo en un solo lugar</p>
+<p class="text-xs text-gray-500 mt-2" id="datos-guardados-info"></p>
+</div>
+<div class="w-full max-w-md space-y-4" id="contenedor-botones-inicio"></div>
+<footer class="mt-auto pt-12 text-xs text-gray-500">© 2026 Gol Central - Todos los derechos reservados</footer>
+</section>
+
+<!-- ========== BUSCADOR GLOBAL ========== -->
+<div id="buscador-global" class="buscador-global hidden">
+<input type="text" id="input-buscador" placeholder="🔍 Buscar local, dueño, llave..." oninput="buscarGlobal()">
+<div id="resultados-busqueda" class="mt-2 space-y-1"></div>
+</div>
+
+<!-- ========== PANTALLA DE PAÍSES ========== -->
+<section id="pantalla-paises" class="hidden min-h-screen bg-fondo">
+<header class="sticky top-0 z-10 bg-azulOscuro/90 backdrop-blur-md border-b border-oro/20 px-4 py-4 flex items-center justify-between">
+<div class="flex items-center">
+<button onclick="volverAInicio()" class="mr-3 text-oro hover:text-oro/80"><i class="fa fa-arrow-left text-xl"></i></button>
+<h2 class="text-lg font-bold">Países</h2>
+</div>
+<div class="flex gap-2">
+<button id="btn-agregar-pais" class="btn-editar hidden" onclick="abrirModalPais()"><i class="fa fa-plus mr-1"></i> Agregar</button>
+<button id="btn-cerrar-sesion-header" class="btn-eliminar hidden text-xs" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i></button>
+</div>
+</header>
+<div class="p-4 grid grid-cols-2 gap-4" id="contenedor-paises"></div>
+</section>
+
+<!-- ========== PANTALLA DE CIUDADES ========== -->
+<section id="pantalla-ciudades" class="hidden min-h-screen bg-fondo">
+<header class="sticky top-0 z-10 bg-azulOscuro/90 backdrop-blur-md border-b border-oro/20 px-4 py-4 flex items-center justify-between">
+<div class="flex items-center">
+<button onclick="volverAPaises()" class="mr-3 text-oro hover:text-oro/80"><i class="fa fa-arrow-left text-xl"></i></button>
+<h2 class="text-lg font-bold" id="nombre-pais"></h2>
+</div>
+<div class="flex gap-2">
+<button id="btn-agregar-ciudad" class="btn-editar hidden" onclick="abrirModalCiudad()"><i class="fa fa-plus mr-1"></i> Agregar</button>
+<button id="btn-cerrar-sesion-header2" class="btn-eliminar hidden text-xs" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i></button>
+</div>
+</header>
+<div class="p-4 space-y-3" id="contenedor-ciudades"></div>
+</section>
+
+<!-- ========== PANTALLA CENTROS COMERCIALES ========== -->
+<section id="pantalla-centros" class="hidden min-h-screen bg-fondo">
+<header class="sticky top-0 z-10 bg-azulOscuro/90 backdrop-blur-md border-b border-oro/20 px-4 py-4 flex items-center justify-between">
+<div class="flex items-center">
+<button onclick="volverACiudades()" class="mr-3 text-oro hover:text-oro/80"><i class="fa fa-arrow-left text-xl"></i></button>
+<h2 class="text-lg font-bold" id="nombre-ciudad"></h2>
+</div>
+<div class="flex gap-2">
+<button id="btn-agregar-centro" class="btn-editar hidden" onclick="abrirModalCentro()"><i class="fa fa-plus mr-1"></i> Agregar</button>
+<button id="btn-cerrar-sesion-header3" class="btn-eliminar hidden text-xs" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i></button>
+</div>
+</header>
+<div class="px-4 pt-4 pb-2" id="contenedor-publicidad"></div>
+<div class="p-4 space-y-6" id="contenedor-centros"></div>
+</section>
+
+<!-- ========== PANTALLA LOCALES ========== -->
+<section id="pantalla-locales" class="hidden min-h-screen bg-fondo">
+<header class="sticky top-0 z-10 bg-azulOscuro/90 backdrop-blur-md border-b border-oro/20 px-4 py-4 flex items-center justify-between">
+<div class="flex items-center">
+<button onclick="volverACentros()" class="mr-3 text-oro hover:text-oro/80"><i class="fa fa-arrow-left text-xl"></i></button>
+<h2 class="text-lg font-bold" id="nombre-centro"></h2>
+</div>
+<div class="flex gap-2">
+<button id="btn-agregar-local" class="btn-editar hidden" onclick="abrirModalLocal()"><i class="fa fa-plus mr-1"></i> Agregar</button>
+<button id="btn-cerrar-sesion-header4" class="btn-eliminar hidden text-xs" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i></button>
+</div>
+</header>
+<!-- FILTROS -->
+<div id="filtros-locales" class="px-4 pt-2 pb-2 flex flex-wrap gap-1.5 scroll-hide hidden"></div>
+<div class="p-4 grid grid-cols-2 gap-4" id="contenedor-locales"></div>
+<div id="paginacion-locales" class="px-4 pb-4 flex justify-center gap-2"></div>
+</section>
+
+<!-- ========== PANTALLA PRODUCTOS ========== -->
+<section id="pantalla-productos" class="hidden min-h-screen bg-fondo">
+<header class="sticky top-0 z-10 bg-azulOscuro/90 backdrop-blur-md border-b border-oro/20 px-4 py-4 flex items-center justify-between">
+<div class="flex items-center">
+<button onclick="volverALocales()" class="mr-3 text-oro hover:text-oro/80"><i class="fa fa-arrow-left text-xl"></i></button>
+<h2 class="text-lg font-bold" id="nombre-local"></h2>
+</div>
+<div class="flex gap-2">
+<button id="btn-agregar-producto" class="btn-editar hidden" onclick="abrirModalProducto()"><i class="fa fa-plus mr-1"></i> Agregar</button>
+<button id="btn-cerrar-sesion-header5" class="btn-eliminar hidden text-xs" onclick="cerrarSesion()"><i class="fa fa-sign-out"></i></button>
+</div>
+</header>
+<div class="p-4 grid grid-cols-2 gap-4" id="contenedor-productos"></div>
+</section>
+
+<!-- ========== PANTALLA INICIO DE SESIÓN ========== -->
+<section id="pantalla-sesion" class="hidden min-h-screen bg-fondo flex items-center justify-center p-6">
+<div class="w-full max-w-md bg-azulOscuro/70 rounded-2xl p-8 card-shadow border border-oro/20">
+<h2 class="text-center text-2xl font-bold mb-6">Acceso</h2>
+<div class="space-y-4">
+<input type="password" id="input-password-maestra" placeholder="Contraseña Dueño Web" class="w-full bg-fondo/60 border border-gray-600 rounded-lg px-4 py-3 focus:border-oro outline-none">
+<input type="text" id="input-llave-local" placeholder="Llave Acceso Local" class="w-full bg-fondo/60 border border-gray-600 rounded-lg px-4 py-3 focus:border-oro outline-none">
+<button onclick="iniciarSesion()" class="w-full bg-dorado hover:bg-dorado/80 rounded-lg py-3 font-semibold transition-all">Ingresar</button>
+<button onclick="mostrarRecuperacion()" class="w-full text-center text-xs text-gray-500 hover:text-oro">¿Olvidaste tu contraseña?</button>
+<button onclick="volverAInicio()" class="w-full text-center text-sm text-gray-400 hover:text-white">Volver</button>
+</div>
+<p id="mensaje-error-sesion" class="text-red-400 text-center text-sm mt-4 hidden"></p>
+<div id="recuperacion-panel" class="hidden mt-4 pt-4 border-t border-gray-700">
+<p class="text-sm text-gray-300 mb-2">Palabra secreta de recuperación:</p>
+<input type="text" id="input-recuperacion" placeholder="Escribe la palabra secreta" class="w-full bg-fondo/60 border border-gray-600 rounded-lg px-4 py-3 focus:border-oro outline-none mb-2">
+<button onclick="recuperarContrasena()" class="w-full bg-oro/20 hover:bg-oro/40 rounded-lg py-2 text-sm transition-all">Recuperar</button>
+<p id="mensaje-recuperacion" class="text-oro text-center text-sm mt-2 hidden"></p>
+</div>
+</div>
+</section>
+
+<!-- ========== MODAL GENÉRICO ========== -->
+<div id="modal-overlay" class="modal-overlay hidden"><div class="modal-contenido" id="modal-contenido"></div></div>
+
+<!-- ========== MODAL INFORME ========== -->
+<div id="modal-informe-overlay" class="modal-overlay hidden"><div class="modal-informe" id="modal-informe-contenido"></div></div>
+
+<!-- ========== PANTALLA GESTIÓN DE LLAVES ========== -->
+<section id="pantalla-gestion-llaves" class="hidden min-h-screen bg-fondo">
+<header class="sticky top-0 z-10 bg-azulOscuro/90 backdrop-blur-md border-b border-oro/20 px-4 py-4 flex items-center justify-between">
+<div class="flex items-center">
+<button onclick="volverAInicio()" class="mr-3 text-oro hover:text-oro/80"><i class="fa fa-arrow-left text-xl"></i></button>
+<h2 class="text-lg font-bold">Gestión de Llaves</h2>
+</div>
+<div class="flex gap-2 flex-wrap">
+<button onclick="exportarDatos()" class="btn-editar text-xs"><i class="fa fa-download"></i> Exportar</button>
+<button onclick="importarDatos()" class="btn-editar text-xs"><i class="fa fa-upload"></i> Importar</button>
+<button onclick="restablecerDatos()" class="btn-eliminar text-xs"><i class="fa fa-refresh"></i> Restablecer</button>
+<button onclick="verHistorial()" class="btn-editar text-xs"><i class="fa fa-history"></i> Historial</button>
+</div>
+</header>
+<!-- FILTROS -->
+<div id="filtros-gestion" class="px-4 pt-2 pb-2 flex flex-wrap gap-1.5 scroll-hide"></div>
+<div class="p-4 space-y-3" id="contenedor-gestion-llaves"></div>
+<div id="paginacion-gestion" class="px-4 pb-4 flex justify-center gap-2"></div>
+</section>
+
+<script>
+// ============ HASH ============
+function hashSimple(str) {
+let hash = 0;
+for (let i = 0; i < str.length; i++) {
+const char = str.charCodeAt(i);
+hash = ((hash << 5) - hash) + char;
+hash |= 0;
+}
+return Math.abs(hash).toString(16).padStart(8, '0') + Math.abs(hash * 7).toString(16).padStart(8, '0') + Math.abs(hash * 13).toString(16).padStart(8, '0') + Math.abs(hash * 17).toString(16).padStart(8, '0');
+}
+
+const PASSWORD_HASH = hashSimple('Golcentral2026');
+const RECUPERACION_HASH = hashSimple('caterine.1520');
+
+// ============ HISTORIAL ============
+let historialCambios = [];
+
+function agregarHistorial(accion) {
+const ahora = new Date();
+const fecha = ahora.toLocaleDateString('es-AR');
+const hora = ahora.toLocaleTimeString('es-AR');
+historialCambios.push({ fecha, hora, accion });
+if (historialCambios.length > 500) historialCambios.shift();
+localStorage.setItem('golcentral_historial', JSON.stringify(historialCambios));
+}
+
+function verHistorial() {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;📋 Historial de Cambios&lt;/h3&gt; &lt;div class="max-h-96 overflow-y-auto space-y-1"&gt; ${historialCambios.slice().reverse().map(h => &lt;div class="historial-item"&gt; &lt;span class="text-gray-500 text-xs"&gt;${h.fecha} {h.accion}</p>
+</div>
+).join('')} &lt;/div&gt; &lt;button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-4 text-sm"&gt;Cerrar&lt;/button&gt;;
+overlay.classList.remove('hidden');
+}
+
+// ============ GENERADOR DE LLAVES ============
+function generarLlave(centroNombre) {
+const prefijo = centroNombre.substring(0, 2).toUpperCase().replace(/[^A-Z]/g, 'X');
+const numero = String(Math.floor(Math.random() * 900) + 100);
+const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+return ${prefijo}-${numero}-${random}`;
+}
+
+function llaveEsUnica(llave) {
+for (let pais of datos.paises) {
+for (let ciudad of pais.ciudades) {
+for (let centro of ciudad.centrosComerciales) {
+for (let local of centro.locales) {
+if (local.llaveAcceso === llave) return false;
+}
+}
+}
+}
+return true;
+}
+
+function generarLlaveUnica(centroNombre) {
+let llave;
+do { llave = generarLlave(centroNombre); } while (!llaveEsUnica(llave));
+return llave;
+}
+
+// ============ DATOS INICIALES ============
+const DATOS_INICIALES = {
+paises: [{
+id: 'pais_1', nombre: 'Argentina', bandera: 'https://flagcdn.com/w320/ar.png',
+ciudades: [{
+id: 'ciudad_1', nombre: 'Buenos Aires', descripcion: 'Capital Federal',
+centrosComerciales: [{
+id: 'centro_1', nombre: 'Shopping Central', descripcion: 'El más grande de la zona',
+publicidadSuperior: { imagen: '', enlace: '', textoAlt: '📢 ESPACIO PUBLICITARIO - DISPONIBLE' },
+locales: [
+{ id: 'local_1', nombre: 'Zapatería Elite', rubro: 'Calzado de lujo', categoria: 'PREMIUM', estadoAlquiler: 'AL_DIA', llaveAcceso: 'SC-001-A1B2', nombreDueño: 'Juan Pérez', fechaVencimiento: '2026-07-15', fotoLocal: 'https://picsum.photos/id/21/300/200', productos: [
+{ id: 'prod_1', nombre: 'Zapatos Cuero Italiano', descripcion: 'Cuero italiano legítimo, cosido a mano', precio: 45000, imagen: 'https://picsum.photos/id/22/300/300' },
+{ id: 'prod_2', nombre: 'Mochila Ejecutiva', descripcion: 'Mochila de cuero premium para laptop', precio: 32000, imagen: 'https://picsum.photos/id/23/300/300' }
+ ]},
+{ id: 'local_2', nombre: 'Librería Central', rubro: 'Libros y útiles', categoria: 'ESTANDAR', estadoAlquiler: 'DEUDA', llaveAcceso: 'SC-002-C3D4', nombreDueño: 'María García', fechaVencimiento: '2026-06-01', fotoLocal: 'https://picsum.photos/id/24/300/200', productos: [
+{ id: 'prod_3', nombre: 'Libro "El Principito"', descripcion: 'Edición ilustrada tapa dura', precio: 8500, imagen: 'https://picsum.photos/id/25/300/300' }
+ ]}
+]
+}]
+}]
+}]
+};
+
+// ============ ESTADO ============
+let datos = JSON.parse(JSON.stringify(DATOS_INICIALES));
+let usuarioActual = null;
+let navegacionActual = { paisId: 'pais_1', ciudadId: 'ciudad_1', centroId: 'centro_1', localId: null };
+let paginaActualGestion = 1;
+let paginaActualLocales = 1;
+let filtroActualGestion = 'TODOS';
+let filtroActualLocales = 'TODOS';
+const ITEMS_POR_PAGINA = 50;
+
+// ============ LOCAL STORAGE ============
+function guardarDatos() {
+localStorage.setItem('golcentral_datos', JSON.stringify(datos));
+localStorage.setItem('golcentral_historial', JSON.stringify(historialCambios));
+actualizarInfoGuardado();
+}
+
+function cargarDatos() {
+const guardado = localStorage.getItem('golcentral_datos');
+const histGuardado = localStorage.getItem('golcentral_historial');
+if (histGuardado) {
+try { historialCambios = JSON.parse(histGuardado); } catch(e) {}
+}
+if (guardado) {
+try { datos = JSON.parse(guardado); return true; } catch(e) { return false; }
+}
+return false;
+}
+
+function actualizarInfoGuardado() {
+const info = document.getElementById('datos-guardados-info');
+if (localStorage.getItem('golcentral_datos')) {
+info.textContent = '💾 Datos guardados en este dispositivo';
+} else {
+info.textContent = '';
+}
+}
+
+function restablecerDatos() {
+if (confirm('¿Estás seguro? Se borrarán todos los cambios y volverás a los datos iniciales.')) {
+datos = JSON.parse(JSON.stringify(DATOS_INICIALES));
+historialCambios = [];
+guardarDatos();
+agregarHistorial('🔄 Datos restablecidos a valores iniciales');
+toast('✅ Datos restablecidos correctamente', 'success');
+volverAInicio();
+}
+}
+
+function exportarDatos() {
+const blob = new Blob([JSON.stringify({ datos, historial: historialCambios }, null, 2)], {type: 'application/json'});
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url; a.download = 'golcentral_backup_' + new Date().toISOString().split('T')[0] + '.json'; a.click();
+URL.revokeObjectURL(url);
+toast('✅ Datos exportados correctamente', 'success');
+}
+
+function importarDatos() {
+const input = document.createElement('input');
+input.type = 'file'; input.accept = '.json';
+input.onchange = function(e) {
+const file = e.target.files[0];
+const reader = new FileReader();
+reader.onload = function(event) {
+try {
+const importado = JSON.parse(event.target.result);
+if (importado.datos && importado.datos.paises) {
+datos = importado.datos;
+if (importado.historial) historialCambios = importado.historial;
+guardarDatos();
+toast('✅ Datos importados correctamente', 'success');
+volverAInicio();
+} else { toast('❌ Archivo inválido', 'error'); }
+} catch(e) { toast('❌ Error al leer el archivo', 'error'); }
+};
+reader.readAsText(file);
+};
+input.click();
+}
+
+// ============ TOAST ============
+let toastTimeout;
+function toast(mensaje, tipo = '') {
+const toastEl = document.getElementById('toast');
+clearTimeout(toastTimeout);
+toastEl.textContent = mensaje;
+toastEl.className = 'toast ' + tipo + ' show';
+toastTimeout = setTimeout(() => { toastEl.classList.remove('show'); }, 3000);
+}
+
+// ============ NAVEGACIÓN ============
+function ocultarTodas() {
+document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+document.getElementById('modal-overlay').classList.add('hidden');
+document.getElementById('modal-informe-overlay').classList.add('hidden');
+document.getElementById('buscador-global').classList.add('hidden');
+document.getElementById('resultados-busqueda').innerHTML = '';
+}
+
+function mostrarBuscador() {
+if (usuarioActual && usuarioActual.tipo === 'duenoweb') {
+document.getElementById('buscador-global').classList.remove('hidden');
+}
+}
+
+function actualizarBotonesCerrarSesion() {
+const esDueño = usuarioActual && usuarioActual.tipo === 'duenoweb';
+const esDueñoLocal = usuarioActual && usuarioActual.tipo === 'duenolocal';
+const mostrar = esDueño || esDueñoLocal;
+['btn-cerrar-sesion-header', 'btn-cerrar-sesion-header2', 'btn-cerrar-sesion-header3', 'btn-cerrar-sesion-header4', 'btn-cerrar-sesion-header5'].forEach(id => {
+const btn = document.getElementById(id);
+if (btn) {
+if (mostrar) btn.classList.remove('hidden');
+else btn.classList.add('hidden');
+}
+});
+}
+
+function irAPaises() {
+ocultarTodas();
+document.getElementById('pantalla-paises').classList.remove('hidden');
+mostrarBuscador();
+actualizarBotonesCerrarSesion();
+if (usuarioActual && usuarioActual.tipo === 'duenoweb') {
+document.getElementById('btn-agregar-pais').classList.remove('hidden');
+}
+renderizarPaises();
+}
+
+function irACiudades(paisId) {
+ocultarTodas();
+navegacionActual.paisId = paisId;
+const pais = datos.paises.find(p => p.id === paisId);
+document.getElementById('nombre-pais').textContent = pais ? pais.nombre : '';
+document.getElementById('pantalla-ciudades').classList.remove('hidden');
+mostrarBuscador();
+actualizarBotonesCerrarSesion();
+if (usuarioActual && usuarioActual.tipo === 'duenoweb') {
+document.getElementById('btn-agregar-ciudad').classList.remove('hidden');
+}
+renderizarCiudades();
+}
+
+function irACentros(ciudadId) {
+ocultarTodas();
+navegacionActual.ciudadId = ciudadId;
+const ciudad = obtenerCiudadActual();
+document.getElementById('nombre-ciudad').textContent = ciudad ? ciudad.nombre : '';
+document.getElementById('pantalla-centros').classList.remove('hidden');
+mostrarBuscador();
+actualizarBotonesCerrarSesion();
+if (usuarioActual && usuarioActual.tipo === 'duenoweb') {
+document.getElementById('btn-agregar-centro').classList.remove('hidden');
+}
+renderizarCentros();
+}
+
+function irALocales(centroId) {
+ocultarTodas();
+navegacionActual.centroId = centroId;
+paginaActualLocales = 1;
+filtroActualLocales = 'TODOS';
+const centro = obtenerCentroActual();
+document.getElementById('nombre-centro').textContent = centro ? centro.nombre : '';
+document.getElementById('pantalla-locales').classList.remove('hidden');
+mostrarBuscador();
+actualizarBotonesCerrarSesion();
+if (usuarioActual && usuarioActual.tipo === 'duenoweb') {
+document.getElementById('btn-agregar-local').classList.remove('hidden');
+document.getElementById('filtros-locales').classList.remove('hidden');
+} else {
+document.getElementById('filtros-locales').classList.add('hidden');
+}
+renderizarFiltrosLocales();
+renderizarLocales();
+}
+
+function irAProductos(localId) {
+ocultarTodas();
+navegacionActual.localId = localId;
+const local = obtenerLocalActual();
+document.getElementById('nombre-local').textContent = local ? local.nombre : '';
+document.getElementById('pantalla-productos').classList.remove('hidden');
+mostrarBuscador();
+actualizarBotonesCerrarSesion();
+document.getElementById('btn-agregar-producto').classList.add('hidden');
+if (usuarioActual) {
+if (usuarioActual.tipo === 'duenoweb' || (usuarioActual.tipo === 'duenolocal' && usuarioActual.localId === localId)) {
+document.getElementById('btn-agregar-producto').classList.remove('hidden');
+}
+}
+renderizarProductos();
+}
+
+function irAIniciarSesion() {
+ocultarTodas();
+document.getElementById('pantalla-sesion').classList.remove('hidden');
+document.getElementById('input-password-maestra').value = '';
+document.getElementById('input-llave-local').value = '';
+document.getElementById('mensaje-error-sesion').classList.add('hidden');
+document.getElementById('recuperacion-panel').classList.add('hidden');
+}
+
+function volverAInicio() {
+ocultarTodas();
+document.getElementById('pantalla-inicio').classList.remove('hidden');
+document.getElementById('buscador-global').classList.add('hidden');
+actualizarBotonesCerrarSesion();
+reconstruirBotonesInicio();
+}
+
+function reconstruirBotonesInicio() {
+const contenedor = document.getElementById('contenedor-botones-inicio');
+contenedor.innerHTML = &lt;button onclick="irAPaises()" class="w-full bg-azulMedio hover:bg-azulOscuro border-2 border-oro/20 hover:border-oro/60 rounded-xl py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] card-shadow"&gt; &lt;i class="fa fa-globe-americas mr-3 text-oro"&gt;&lt;/i&gt; Ver Países &lt;/button&gt;${usuarioActual && usuarioActual.tipo === 'duenoweb' ? &lt;button onclick="generarInforme()" class="btn-informe"&gt;📊 GENERAR INFORME DE GESTIÓN&lt;/button&gt; &lt;button onclick="irAGestionLlaves()" class="w-full bg-azulMedio/40 hover:bg-azulMedio border border-oro/30 hover:border-oro/70 rounded-xl py-3 text-base transition-all"&gt; &lt;i class="fa fa-key mr-2 text-oro"&gt;&lt;/i&gt; Gestión de Llaves &lt;/button&gt; &lt;button onclick="verHistorial()" class="w-full bg-azulMedio/40 hover:bg-azulMedio border border-gray-600/50 hover:border-gray-400 rounded-xl py-3 text-base transition-all"&gt; &lt;i class="fa fa-history mr-2 text-gray-400"&gt;&lt;/i&gt; Historial de Cambios &lt;/button&gt; &lt;button onclick="cerrarSesion()" class="w-full bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 hover:border-red-500/70 rounded-xl py-3 text-base transition-all text-red-400"&gt; &lt;i class="fa fa-sign-out mr-2"&gt;&lt;/i&gt; Cerrar Sesión &lt;/button&gt; : (usuarioActual && usuarioActual.tipo === 'duenolocal' ? &lt;button onclick="cerrarSesion()" class="w-full bg-red-600/20 hover:bg-red-600/40 border border-red-500/30 hover:border-red-500/70 rounded-xl py-3 text-base transition-all text-red-400"&gt; &lt;i class="fa fa-sign-out mr-2"&gt;&lt;/i&gt; Cerrar Sesión &lt;/button&gt; : &lt;button onclick="irAIniciarSesion()" class="w-full bg-azulMedio/40 hover:bg-azulMedio border border-dorado/30 hover:border-dorado/70 rounded-xl py-3 text-base transition-all"&gt; &lt;i class="fa fa-sign-in mr-2"&gt;&lt;/i&gt; Acceso Dueños &lt;/button&gt;)}
+`;
+}
+
+function cerrarSesion() {
+usuarioActual = null;
+navegacionActual = { paisId: 'pais_1', ciudadId: 'ciudad_1', centroId: 'centro_1', localId: null };
+document.getElementById('buscador-global').classList.add('hidden');
+actualizarBotonesCerrarSesion();
+reconstruirBotonesInicio();
+volverAInicio();
+toast('👋 Sesión cerrada', '');
+}
+
+function volverAPaises() { irAPaises(); }
+function volverACiudades() { irACiudades(navegacionActual.paisId); }
+function volverACentros() { irACentros(navegacionActual.ciudadId); }
+function volverALocales() { irALocales(navegacionActual.centroId); }
+
+// ============ HELPERS ============
+function obtenerPaisActual() { return datos.paises.find(p => p.id === navegacionActual.paisId); }
+function obtenerCiudadActual() { const p = obtenerPaisActual(); return p ? p.ciudades.find(c => c.id === navegacionActual.ciudadId) : null; }
+function obtenerCentroActual() { const c = obtenerCiudadActual(); return c ? c.centrosComerciales.find(cc => cc.id === navegacionActual.centroId) : null; }
+function obtenerLocalActual() { const cc = obtenerCentroActual(); return cc ? cc.locales.find(l => l.id === navegacionActual.localId) : null; }
+
+function formatearPrecio(precio) {
+return '$` ' + precio.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function ordenarAlfabeticamente(arr, campo = 'nombre') {
+return [...arr].sort((a, b) => (a[campo] || '').localeCompare(b[campo] || '', 'es'));
+}
+
+function calcularEstadoVencimiento(fecha) {
+const hoy = new Date(); hoy.setHours(0,0,0,0);
+const venc = new Date(fecha + 'T00:00:00');
+const diff = Math.ceil((venc - hoy) / (10006060*24));
+if (diff < 0) return { texto: '🚨 ¡VENCIDO! (' + Math.abs(diff) + ' días)', clase: 'text-red-400 font-bold' };
+if (diff === 0) return { texto: '⚠️ VENCE HOY', clase: 'text-yellow-400 font-bold' };
+if (diff <= 7) return { texto: '⚠️ Vence en ' + diff + ' días', clase: 'text-yellow-400' };
+if (diff <= 30) return { texto: '📅 Vence en ' + diff + ' días', clase: 'text-gray-400' };
+return { texto: '📅 ' + venc.toLocaleDateString('es-AR'), clase: 'text-gray-500' };
+}
+
+// ============ BUSCADOR GLOBAL ============
+function buscarGlobal() {
+const termino = document.getElementById('input-buscador').value.trim().toLowerCase();
+const contenedor = document.getElementById('resultados-busqueda');
+if (termino.length < 2) { contenedor.innerHTML = ''; return; }
+
+let resultados = [];
+datos.paises.forEach(pais => {
+pais.ciudades.forEach(ciudad => {
+ciudad.centrosComerciales.forEach(centro => {
+centro.locales.forEach(local => {
+if (local.nombre.toLowerCase().includes(termino) ||
+local.nombreDueño.toLowerCase().includes(termino) ||
+local.llaveAcceso.toLowerCase().includes(termino) ||
+local.rubro.toLowerCase().includes(termino) ||
+centro.nombre.toLowerCase().includes(termino) ||
+ciudad.nombre.toLowerCase().includes(termino) ||
+pais.nombre.toLowerCase().includes(termino)) {
+resultados.push({ ...local, nombrePais: pais.nombre, nombreCiudad: ciudad.nombre, nombreCentro: centro.nombre, paisId: pais.id, ciudadId: ciudad.id, centroId: centro.id });
+}
+});
+});
+});
+});
+
+contenedor.innerHTML = resultados.slice(0, 15).map(r => &lt;div class="resultado-busqueda" onclick="irAProductoDesdeBusqueda('${r.paisId}','{r.centroId}','{r.nombre}</span>
+<span class="etiqueta-pais">{r.rubro} · {r.nombreCiudad}</p>
+</div>
+`).join('');
+}
+
+function irAProductoDesdeBusqueda(paisId, ciudadId, centroId, localId) {
+navegacionActual = { paisId, ciudadId, centroId, localId };
+document.getElementById('resultados-busqueda').innerHTML = '';
+document.getElementById('input-buscador').value = '';
+irAProductos(localId);
+}
+
+// ============ FILTROS Y PAGINACIÓN ============
+function renderizarFiltrosLocales() {
+const contenedor = document.getElementById('filtros-locales');
+const filtros = ['TODOS', 'AL_DIA', 'DEUDA', 'BLOQUEADO', 'VACANTE', 'PREMIUM', 'ESTANDAR', 'VENCIDOS'];
+const nombres = { 'TODOS': 'Todos', 'AL_DIA': '✅ Al Día', 'DEUDA': '⚠️ Deuda', 'BLOQUEADO': '🔴 Bloqueado', 'VACANTE': '⚪ Vacante', 'PREMIUM': '⭐ Premium', 'ESTANDAR': '📋 Estándar', 'VENCIDOS': '🚨 Vencidos' };
+
+contenedor.innerHTML = filtros.map(f => &lt;button onclick="cambiarFiltroLocales('${f}')" class="filtro-btn ${filtroActualLocales === f ? 'activo' : ''}"&gt;${nombres[f]}</button>
+`).join('');
+}
+
+function cambiarFiltroLocales(filtro) {
+filtroActualLocales = filtro;
+paginaActualLocales = 1;
+renderizarFiltrosLocales();
+renderizarLocales();
+}
+
+function obtenerLocalesFiltrados() {
+const centro = obtenerCentroActual();
+if (!centro) return [];
+
+let locales = [...centro.locales];
+
+switch(filtroActualLocales) {
+case 'AL_DIA': locales = locales.filter(l => l.estadoAlquiler === 'AL_DIA'); break;
+case 'DEUDA': locales = locales.filter(l => l.estadoAlquiler === 'DEUDA'); break;
+case 'BLOQUEADO': locales = locales.filter(l => l.estadoAlquiler === 'BLOQUEADO'); break;
+case 'VACANTE': locales = locales.filter(l => l.estadoAlquiler === 'VACANTE'); break;
+case 'PREMIUM': locales = locales.filter(l => l.categoria === 'PREMIUM'); break;
+case 'ESTANDAR': locales = locales.filter(l => l.categoria === 'ESTANDAR'); break;
+case 'VENCIDOS':
+const hoy = new Date(); hoy.setHours(0,0,0,0);
+locales = locales.filter(l => l.fechaVencimiento && new Date(l.fechaVencimiento + 'T00:00:00') <= hoy);
+break;
+}
+
+return ordenarAlfabeticamente(locales);
+}
+
+function renderizarPaginacionLocales(totalItems) {
+const contenedor = document.getElementById('paginacion-locales');
+const totalPaginas = Math.ceil(totalItems / ITEMS_POR_PAGINA);
+if (totalPaginas <= 1) { contenedor.innerHTML = ''; return; }
+
+let html = <button onclick="cambiarPaginaLocales(${paginaActualLocales - 1})" class="paginacion-btn latex
+{paginaActualLocales === 1 ? 'desactivado' : ''}"&gt;← Ant&lt;/button>`; for (let i = 1; i &lt;= totalPaginas; i++) { if (i === 1 || i === totalPaginas || Math.abs(i - paginaActualLocales) &lt;= 2) { html += `<button onclick="cambiarPaginaLocales(
+
+{i})" class="paginacion-btn {i}</button>; } else if (i === 2 && paginaActualLocales &gt; 4) { html +=<span class="text-gray-500 px-2">...</span>; } } html +=<button onclick="cambiarPaginaLocales({paginaActualLocales >= totalPaginas ? 'desactivado' : ''}">Sig →</button>`;
+contenedor.innerHTML = html;
+}
+
+function cambiarPaginaLocales(pagina) {
+const centro = obtenerCentroActual();
+if (!centro) return;
+const localesFiltrados = obtenerLocalesFiltrados();
+const totalPaginas = Math.ceil(localesFiltrados.length / ITEMS_POR_PAGINA);
+if (pagina < 1 || pagina > totalPaginas) return;
+paginaActualLocales = pagina;
+renderizarLocales();
+}
+
+// ============ RENDERIZADO ============
+function renderizarPaises() {
+const contenedor = document.getElementById('contenedor-paises');
+const paisesOrdenados = ordenarAlfabeticamente(datos.paises);
+contenedor.innerHTML = paisesOrdenados.map(pais => &lt;div onclick="irACiudades('${pais.id}')" class="bg-azulMedio/50 hover:bg-azulMedio rounded-xl p-5 card-shadow border border-transparent hover:border-oro/40 transition-all transform hover:scale-[1.03] cursor-pointer relative">
+${usuarioActual && usuarioActual.tipo === 'duenoweb' ?<button onclick="event.stopPropagation(); abrirModalPais('latex
+{pais.id}')" class="absolute top-2 right-2 btn-editar text-xs px-2 py-1 z-10"&gt;&lt;i class="fa fa-pencil"&gt;&lt;/i&gt;&lt;/button>` : ''} &lt;img src="
+
+{pais.bandera || ''}" class="w-full h-24 object-cover rounded-lg mb-3" onerror="this.parentElement.querySelector('.placeholder-pais').style.display='flex'; this.style.display='none';">
+<div class="placeholder-pais placeholder-img rounded-lg mb-3" style="display:{pais.nombre}</div>
+<h3 class="text-center font-semibold">${pais.nombre}&lt;/h3&gt; &lt;/div&gt;).join('');
+}
+
+function renderizarCiudades() {
+const contenedor = document.getElementById('contenedor-ciudades');
+const pais = obtenerPaisActual();
+if (!pais) return;
+const ciudadesOrdenadas = ordenarAlfabeticamente(pais.ciudades);
+contenedor.innerHTML = ciudadesOrdenadas.map(ciudad => &lt;div onclick="irACentros('${ciudad.id}')" class="bg-azulMedio/50 hover:bg-azulMedio rounded-xl p-4 card-shadow border-l-4 border-oro transition-all cursor-pointer relative">
+latex
+{usuarioActual && usuarioActual.tipo === 'duenoweb' ? `<button onclick="event.stopPropagation(); abrirModalCiudad('
+
+{ciudad.id}')" class="absolute top-2 right-2 btn-editar text-xs px-2 py-1 z-10"><i class="fa fa-pencil"></i></button>: ''} &lt;h3 class="font-semibold text-lg"&gt;${ciudad.nombre}</h3>
+<p class="text-sm text-gray-300">${ciudad.descripcion || ''}&lt;/p&gt; &lt;/div&gt;).join('');
+}
+
+function renderizarCentros() {
+const ciudad = obtenerCiudadActual();
+if (!ciudad) return;
+
+const contenedorPubli = document.getElementById('contenedor-publicidad');
+if (ciudad.centrosComerciales.length > 0) {
+const centroConPublicidad = ciudad.centrosComerciales[0];
+const pub = centroConPublicidad.publicidadSuperior;
+contenedorPubli.innerHTML = &lt;div class="bg-gradient-to-r from-oro/20 to-dorado/20 rounded-xl min-h-[6rem] flex items-center justify-center border border-oro/30 card-shadow relative overflow-hidden"&gt; ${pub.imagen ? <img src="${pub.imagen}" class="w-full h-full object-cover rounded-xl absolute inset-0" onerror="this.style.display='none';">: ''} &lt;span class="text-oro font-bold text-lg ${pub.imagen ? 'hidden' : ''}">${pub.textoAlt || '📢 ESPACIO PUBLICITARIO - DISPONIBLE'}&lt;/span&gt; ${!pub.imagen ? '<span class="absolute bottom-2 text-xs text-oro/70">💡 Vendé este espacio</span>' : ''}
+${usuarioActual && usuarioActual.tipo === 'duenoweb' ?<button onclick="event.stopPropagation(); abrirModalPublicidad('${centroConPublicidad.id}')" class="absolute bottom-2 right-2 btn-editar text-xs px-2 py-1 z-10"&gt;&lt;i class="fa fa-pencil"&gt;&lt;/i&gt; Editar&lt;/button> : ''}
+</div>
+`;
+}
+
+const contenedor = document.getElementById('contenedor-centros');
+const centrosOrdenados = ordenarAlfabeticamente(ciudad.centrosComerciales);
+contenedor.innerHTML = centrosOrdenados.map(centro => &lt;div onclick="irALocales('${centro.id}')" class="bg-gradient-to-br from-azulMedio to-azulOscuro rounded-xl p-5 card-shadow border-2 border-oro/60 hover:border-oro transition-all transform hover:scale-[1.02] cursor-pointer relative">
+latex
+{usuarioActual && usuarioActual.tipo === 'duenoweb' ? `<button onclick="event.stopPropagation(); abrirModalCentro('
+
+{centro.id}')" class="absolute top-2 right-2 btn-editar text-xs px-2 py-1 z-10"><i class="fa fa-pencil"></i></button>: ''} &lt;div class="w-full h-32 bg-azulMedio/50 rounded-lg mb-3 flex items-center justify-center"&gt; &lt;i class="fa fa-shopping-mall text-4xl text-oro/50"&gt;&lt;/i&gt; &lt;/div&gt; &lt;h4 class="font-bold text-lg"&gt;${centro.nombre}</h4>
+<p class="text-sm text-gray-300">${centro.descripcion || ''}&lt;/p&gt; &lt;span class="inline-block mt-2 bg-oro/20 text-oro px-2 py-0.5 rounded text-xs"&gt;⭐ Destacado&lt;/span&gt; &lt;/div&gt;).join('');
+}
+
+function renderizarLocales() {
+const centro = obtenerCentroActual();
+if (!centro) return;
+
+const localesFiltrados = obtenerLocalesFiltrados();
+const inicio = (paginaActualLocales - 1) * ITEMS_POR_PAGINA;
+const paginaLocales = localesFiltrados.slice(inicio, inicio + ITEMS_POR_PAGINA);
+
+const premium = paginaLocales.filter(l => l.categoria === 'PREMIUM');
+const estandar = paginaLocales.filter(l => l.categoria === 'ESTANDAR');
+const contenedor = document.getElementById('contenedor-locales');
+
+let html = '';
+
+if (premium.length > 0) {
+html += <h3 class="text-oro font-bold mb-3 col-span-2 flex items-center"&gt;&lt;i class="fa fa-star mr-2"&gt;&lt;/i&gt; Locales Premium&lt;/h3>;
+html += premium.map(local => tarjetaLocal(local)).join('');
+}
+
+if (estandar.length > 0) {
+html += <h3 class="text-gray-400 font-medium mb-3 col-span-2"&gt;Locales Estándar&lt;/h3>;
+html += estandar.map(local => tarjetaLocal(local)).join('');
+}
+
+contenedor.innerHTML = html || '<p class="text-gray-500 text-center col-span-2 py-8">No hay locales con este filtro</p>';
+renderizarPaginacionLocales(localesFiltrados.length);
+}
+
+function tarjetaLocal(local) {
+const bloqueado = local.estadoAlquiler === 'BLOQUEADO';
+const esDueño = usuarioActual && usuarioActual.tipo === 'duenoweb';
+const esPremium = local.categoria === 'PREMIUM';
+const estadoVenc = local.fechaVencimiento ? calcularEstadoVencimiento(local.fechaVencimiento) : null;
+
+return &lt;div onclick="${bloqueado && !esDueño ? '' : irAProductos('${local.id}')}" class="${esPremium ? 'bg-gradient-to-b from-azulMedio/80 to-azulOscuro/80' : 'bg-azulMedio/40 hover:bg-azulMedio/60'} rounded-xl p-4 card-shadow border-2 ${esPremium ? 'border-oro/70' : 'border-gray-600/50'} ${bloqueado && !esDueño ? 'cursor-not-allowed' : 'cursor-pointer'} transition-all ${!bloqueado ? 'transform hover:scale-[1.03]' : ''} relative overflow-hidden ${local.estadoAlquiler === 'DEUDA' ? 'ring-2 ring-yellow-500/50 bg-yellow-900/20' : ''}">
+${esPremium ? '&lt;div class="absolute top-0 right-0 bg-oro text-fondo font-bold px-2 py-1 text-xs z-10"&gt;PREMIUM&lt;/div&gt;' : ''} ${esDueño ? <button onclick="event.stopPropagation(); abrirModalLocal('${local.id}')" class="absolute top-0 left-0 btn-editar text-xs px-2 py-0.5 z-10"><i class="fa fa-pencil"></i></button>: ''} ${bloqueado ? '<div class="local-bloqueado-overlay"><span>🔴 LOCAL BLOQUEADO</span><span style="font-size:11px;color:#F87171;">ACCESO DENEGADO</span></div>' : ''}
+${local.fotoLocal ?: '&lt;div class="placeholder-img rounded-lg mb-2" style="height:112px;"&gt;🏬 ESPACIO DISPONIBLE&lt;br&gt;&lt;span style="font-size:10px;"&gt;PARA ALQUILER&lt;/span&gt;&lt;/div&gt;'} &lt;h3 class="${esPremium ? 'font-bold' : 'font-medium'} text-center">{esPremium ? 'text-gray-300' : 'text-gray-400'}">{esDueño ? estadoLocalBadge(local) : ''}
+</div>
+latex
+{esDueño && estadoVenc ? `<p class="text-xs text-center mt-1 
+
+{estadoVenc.clase}">${estadoVenc.texto}&lt;/p> : ''}
+</div>
+`;
+}
+
+function estadoLocalBadge(local) {
+switch(local.estadoAlquiler) {
+case 'AL_DIA': return '<span class="estado-al-dia text-xs inline-block">✅ AL DÍA</span>';
+case 'DEUDA': return '<span class="estado-deuda text-xs inline-block">⚠️ DEUDA</span>';
+case 'BLOQUEADO': return '<span class="estado-bloqueado text-xs inline-block">🔴 BLOQUEADO</span>';
+case 'VACANTE': return '<span class="estado-vacante text-xs inline-block">⚪ VACANTE</span>';
+default: return '';
+}
+}
+
+function renderizarProductos() {
+const local = obtenerLocalActual();
+if (!local) return;
+const contenedor = document.getElementById('contenedor-productos');
+contenedor.innerHTML = local.productos.map(prod => &lt;div class="bg-azulMedio/40 rounded-xl p-3 card-shadow hover:bg-azulMedio/60 transition-all relative"&gt;${usuarioActual && (usuarioActual.tipo === 'duenoweb' || (usuarioActual.tipo === 'duenolocal' && usuarioActual.localId === local.id)) ? &lt;button onclick="event.stopPropagation(); abrirModalProducto('${prod.id}')" class="absolute top-1 right-1 btn-editar text-xs px-2 py-0.5 z-10"><i class="fa fa-pencil"></i></button>
+<button onclick="event.stopPropagation(); eliminarProducto('${prod.id}')" class="absolute top-1 right-12 btn-eliminar text-xs px-2 py-0.5 z-10"&gt;&lt;i class="fa fa-trash"&gt;&lt;/i&gt;&lt;/button&gt; : ''}
+latex
+{prod.imagen ? `<img src="
+
+{prod.imagen}" class="w-full h-32 object-cover rounded-lg mb-2" onerror="this.style.display='none';">: '&lt;div class="placeholder-img rounded-lg mb-2" style="height:128px;"&gt;📦 Sin imagen&lt;/div&gt;'} &lt;h3 class="font-semibold text-sm"&gt;${prod.nombre}</h3>
+<p class="text-xs text-gray-400">${prod.descripcion || ''}&lt;/p&gt; &lt;p class="text-oro font-bold text-lg mt-1"&gt;${formatearPrecio(prod.precio)}</p>
+</div>
+`).join('');
+}
+
+// ============ GESTIÓN DE LLAVES ============
+function irAGestionLlaves() {
+ocultarTodas();
+paginaActualGestion = 1;
+filtroActualGestion = 'TODOS';
+document.getElementById('pantalla-gestion-llaves').classList.remove('hidden');
+actualizarBotonesCerrarSesion();
+renderizarFiltrosGestion();
+renderizarGestionLlaves();
+}
+
+function renderizarFiltrosGestion() {
+const contenedor = document.getElementById('filtros-gestion');
+const filtros = ['TODOS', 'AL_DIA', 'DEUDA', 'BLOQUEADO', 'VACANTE', 'PREMIUM', 'ESTANDAR', 'VENCIDOS'];
+const nombres = { 'TODOS': 'Todos', 'AL_DIA': '✅ Al Día', 'DEUDA': '⚠️ Deuda', 'BLOQUEADO': '🔴 Bloqueado', 'VACANTE': '⚪ Vacante', 'PREMIUM': '⭐ Premium', 'ESTANDAR': '📋 Estándar', 'VENCIDOS': '🚨 Vencidos' };
+
+contenedor.innerHTML = filtros.map(f => &lt;button onclick="cambiarFiltroGestion('${f}')" class="filtro-btn {nombres[f]}</button>
+`).join('');
+}
+
+function cambiarFiltroGestion(filtro) {
+filtroActualGestion = filtro;
+paginaActualGestion = 1;
+renderizarFiltrosGestion();
+renderizarGestionLlaves();
+}
+
+function obtenerTodosLocales() {
+let todos = [];
+datos.paises.forEach(pais => {
+pais.ciudades.forEach(ciudad => {
+ciudad.centrosComerciales.forEach(centro => {
+centro.locales.forEach(local => {
+todos.push({ ...local, nombrePais: pais.nombre, nombreCiudad: ciudad.nombre, nombreCentro: centro.nombre, paisId: pais.id, ciudadId: ciudad.id, centroId: centro.id });
+});
+});
+});
+});
+
+switch(filtroActualGestion) {
+case 'AL_DIA': todos = todos.filter(l => l.estadoAlquiler === 'AL_DIA'); break;
+case 'DEUDA': todos = todos.filter(l => l.estadoAlquiler === 'DEUDA'); break;
+case 'BLOQUEADO': todos = todos.filter(l => l.estadoAlquiler === 'BLOQUEADO'); break;
+case 'VACANTE': todos = todos.filter(l => l.estadoAlquiler === 'VACANTE'); break;
+case 'PREMIUM': todos = todos.filter(l => l.categoria === 'PREMIUM'); break;
+case 'ESTANDAR': todos = todos.filter(l => l.categoria === 'ESTANDAR'); break;
+case 'VENCIDOS':
+const hoy = new Date(); hoy.setHours(0,0,0,0);
+todos = todos.filter(l => l.fechaVencimiento && new Date(l.fechaVencimiento + 'T00:00:00') <= hoy);
+break;
+}
+
+return ordenarAlfabeticamente(todos);
+}
+
+function renderizarGestionLlaves() {
+const todosLocales = obtenerTodosLocales();
+const inicio = (paginaActualGestion - 1) * ITEMS_POR_PAGINA;
+const pagina = todosLocales.slice(inicio, inicio + ITEMS_POR_PAGINA);
+const contenedor = document.getElementById('contenedor-gestion-llaves');
+
+contenedor.innerHTML = pagina.map(local => {
+let claseEstado = '', textoEstado = '';
+switch(local.estadoAlquiler) {
+case 'AL_DIA': claseEstado = 'estado-al-dia'; textoEstado = '✅ AL DÍA'; break;
+case 'DEUDA': claseEstado = 'estado-deuda'; textoEstado = '⚠️ DEUDA'; break;
+case 'BLOQUEADO': claseEstado = 'estado-bloqueado'; textoEstado = '🔴 BLOQUEADO'; break;
+case 'VACANTE': claseEstado = 'estado-vacante'; textoEstado = '⚪ VACANTE'; break;
+}
+const estadoVenc = local.fechaVencimiento ? calcularEstadoVencimiento(local.fechaVencimiento) : null;
+
+return &lt;div class="bg-azulMedio/30 rounded-xl p-4 border border-gray-700/50 card-shadow"&gt; &lt;div class="flex justify-between items-start mb-2"&gt; &lt;div&gt; &lt;h4 class="font-bold text-white"&gt;${local.nombre} <span class="text-xs ${local.categoria === 'PREMIUM' ? 'text-oro' : 'text-gray-400'}"&gt;${local.categoria}</span></h4>
+<p class="text-xs text-gray-400">${local.nombreCentro} · ${local.nombreCiudad} · ${local.nombrePais}&lt;/p&gt; &lt;p class="text-xs text-gray-400 mt-1"&gt;👤 Dueño: ${local.nombreDueño || 'Sin asignar'}</p>
+<p class="text-xs text-gray-400">🔑 Llave: <span class="text-oro font-mono text-xs">${local.llaveAcceso || 'Sin llave'}&lt;/span&gt;&lt;/p&gt; ${estadoVenc ? <p class="text-xs mt-1${estadoVenc.clase}">latex
+{estadoVenc.texto}&lt;/p>` : ''} &lt;/div&gt; &lt;span class="
+
+{claseEstado} text-xs">{local.paisId}','{local.centroId}','{local.paisId}','{local.centroId}','{local.paisId}','{local.centroId}','{local.paisId}','{local.centroId}','{local.paisId}','{local.centroId}','${local.id}')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-oro/20 text-oro border border-oro/40 hover:bg-oro/40"&gt;🔑 Nueva Llave&lt;/button&gt; &lt;/div&gt; &lt;/div>;
+}).join('');
+
+renderizarPaginacionGestion(todosLocales.length);
+}
+
+function renderizarPaginacionGestion(totalItems) {
+const contenedor = document.getElementById('paginacion-gestion');
+const totalPaginas = Math.ceil(totalItems / ITEMS_POR_PAGINA);
+if (totalPaginas <= 1) { contenedor.innerHTML = ''; return; }
+
+let html = <button onclick="cambiarPaginaGestion(${paginaActualGestion - 1})" class="paginacion-btn latex
+{paginaActualGestion === 1 ? 'desactivado' : ''}"&gt;← Ant&lt;/button>`; for (let i = 1; i &lt;= totalPaginas; i++) { if (i === 1 || i === totalPaginas || Math.abs(i - paginaActualGestion) &lt;= 2) { html += `<button onclick="cambiarPaginaGestion(
+
+{i})" class="paginacion-btn {i}</button>; } else if (i === 2 && paginaActualGestion &gt; 4) { html +=<span class="text-gray-500 px-2">...</span>; } } html +=<button onclick="cambiarPaginaGestion({paginaActualGestion >= totalPaginas ? 'desactivado' : ''}">Sig →</button>`;
+contenedor.innerHTML = html;
+}
+
+function cambiarPaginaGestion(pagina) {
+const todosLocales = obtenerTodosLocales();
+const totalPaginas = Math.ceil(todosLocales.length / ITEMS_POR_PAGINA);
+if (pagina < 1 || pagina > totalPaginas) return;
+paginaActualGestion = pagina;
+renderizarGestionLlaves();
+}
+
+function encontrarLocal(paisId, ciudadId, centroId, localId) {
+const pais = datos.paises.find(p => p.id === paisId);
+if (!pais) return null;
+const ciudad = pais.ciudades.find(c => c.id === ciudadId);
+if (!ciudad) return null;
+const centro = ciudad.centrosComerciales.find(c => c.id === centroId);
+if (!centro) return null;
+return centro.locales.find(l => l.id === localId);
+}
+
+function cambiarEstadoLocal(paisId, ciudadId, centroId, localId, nuevoEstado) {
+const local = encontrarLocal(paisId, ciudadId, centroId, localId);
+if (!local) return;
+const estadoAnterior = local.estadoAlquiler;
+local.estadoAlquiler = nuevoEstado;
+guardarDatos();
+
+const nombresEstado = { 'AL_DIA': 'Al Día ✅', 'DEUDA': 'Deuda ⚠️', 'BLOQUEADO': 'Bloqueado 🔴', 'VACANTE': 'Vacante ⚪' };
+agregarHistorial(Estado: "${local.nombre}" → ${nombresEstado[nuevoEstado]} (antes: ${nombresEstado[estadoAnterior] || estadoAnterior})); toast(Local "${local.nombre}" → ${nombresEstado[nuevoEstado]}${nuevoEstado === 'BLOQUEADO' ? ' | Llave DESACTIVADA' : ''}, nuevoEstado === 'BLOQUEADO' ? 'warning' : 'success');
+renderizarGestionLlaves();
+}
+
+function abrirModalCambiarLlave(paisId, ciudadId, centroId, localId) {
+const local = encontrarLocal(paisId, ciudadId, centroId, localId);
+if (!local) return;
+
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;🔑 CAMBIAR LLAVE / NUEVO DUEÑO&lt;/h3&gt; &lt;p class="text-sm text-gray-300 mb-2"&gt;Local: &lt;strong&gt;${local.nombre}</strong></p>
+<p class="text-sm text-gray-300 mb-2">Llave actual: <span class="text-oro font-mono">${local.llaveAcceso || 'Sin llave'}&lt;/span&gt;&lt;/p&gt; &lt;p class="text-xs text-red-400 mb-4"&gt;⚠️ La llave anterior DEJARÁ DE FUNCIONAR PARA SIEMPRE&lt;/p&gt; &lt;input type="text" id="input-nuevo-dueno" class="input-form" placeholder="Nombre del nuevo dueño" value=""&gt; &lt;button onclick="generarYGuardarNuevaLlave('${paisId}','${ciudadId}','${centroId}','${localId}')" class="btn-guardar mt-2"&gt;🔑 GENERAR NUEVA LLAVE Y ASIGNAR&lt;/button&gt; &lt;button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm"&gt;Cancelar&lt;/button&gt;;
+overlay.classList.remove('hidden');
+}
+
+function generarYGuardarNuevaLlave(paisId, ciudadId, centroId, localId) {
+const nuevoDueno = document.getElementById('input-nuevo-dueno').value.trim();
+const local = encontrarLocal(paisId, ciudadId, centroId, localId);
+if (!local) return;
+
+const centro = datos.paises.find(p => p.id === paisId).ciudades.find(c => c.id === ciudadId).centrosComerciales.find(cc => cc.id === centroId);
+const llaveVieja = local.llaveAcceso;
+const nuevaLlave = generarLlaveUnica(centro.nombre);
+
+local.llaveAcceso = nuevaLlave;
+local.nombreDueño = nuevoDueno || local.nombreDueño;
+local.estadoAlquiler = 'AL_DIA';
+guardarDatos();
+
+agregarHistorial(🔑 Cambio de llave: "${local.nombre}" | Llave anterior: ${llaveVieja || 'Ninguna'} → Nueva: ${nuevaLlave} | Dueño: ${local.nombreDueño});
+toast(✅ Nueva llave generada: ${nuevaLlave}\nDueño: ${local.nombreDueño}\nLa llave anterior (${llaveVieja}) ya NO FUNCIONA`, 'success');
+cerrarModal();
+renderizarGestionLlaves();
+}
+
+// ============ AUTENTICACIÓN ============
+function iniciarSesion() {
+const password = document.getElementById('input-password-maestra').value.trim();
+const llaveLocal = document.getElementById('input-llave-local').value.trim().toUpperCase();
+const mensajeError = document.getElementById('mensaje-error-sesion');
+mensajeError.classList.add('hidden');
+
+if (password && hashSimple(password) === PASSWORD_HASH) {
+usuarioActual = { tipo: 'duenoweb' };
+ocultarTodas();
+actualizarBotonesCerrarSesion();
+reconstruirBotonesInicio();
+document.getElementById('pantalla-inicio').classList.remove('hidden');
+toast('✅ Bienvenido, Dueño Web', 'success');
+return;
+}
+
+if (llaveLocal) {
+for (let pais of datos.paises) {
+for (let ciudad of pais.ciudades) {
+for (let centro of ciudad.centrosComerciales) {
+for (let local of centro.locales) {
+if (local.llaveAcceso === llaveLocal && local.estadoAlquiler !== 'BLOQUEADO') {
+usuarioActual = { tipo: 'duenolocal', localId: local.id, centroId: centro.id, ciudadId: ciudad.id, paisId: pais.id };
+navegacionActual = { paisId: pais.id, ciudadId: ciudad.id, centroId: centro.id, localId: local.id };
+actualizarBotonesCerrarSesion();
+if (local.estadoAlquiler === 'DEUDA') {
+toast('⚠️ ATENCIÓN: Su local tiene una deuda pendiente', 'warning');
+}
+irAProductos(local.id);
+return;
+}
+}
+}
+}
+}
+}
+
+mensajeError.textContent = 'Contraseña o llave incorrecta';
+mensajeError.classList.remove('hidden');
+}
+
+function mostrarRecuperacion() {
+document.getElementById('recuperacion-panel').classList.toggle('hidden');
+document.getElementById('mensaje-recuperacion').classList.add('hidden');
+}
+
+function recuperarContrasena() {
+const palabra = document.getElementById('input-recuperacion').value.trim();
+const mensaje = document.getElementById('mensaje-recuperacion');
+
+if (hashSimple(palabra) === RECUPERACION_HASH) {
+mensaje.textContent = '✅ Tu contraseña es: Golcentral2026';
+mensaje.classList.remove('hidden');
+document.getElementById('input-password-maestra').value = 'Golcentral2026';
+} else {
+mensaje.textContent = '❌ Palabra secreta incorrecta';
+mensaje.classList.remove('hidden');
+}
+}
+
+// ============ MODALES ============
+function cerrarModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+function cerrarModalInforme() { document.getElementById('modal-informe-overlay').classList.add('hidden'); }
+
+function abrirModalPublicidad(centroId) {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+const centro = obtenerCiudadActual().centrosComerciales.find(c => c.id === centroId);
+const pub = centro.publicidadSuperior;
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;📢 Editar Espacio Publicitario&lt;/h3&gt; &lt;p class="text-sm text-gray-300 mb-2"&gt;Centro: &lt;strong&gt;${centro.nombre}</strong></p>
+<input type="text" id="input-texto-publicidad" class="input-form" placeholder="Texto del cartel" value="{pub.imagen || ''}">
+<input type="text" id="input-enlace-publicidad" class="input-form" placeholder="Enlace al hacer clic" value="{centroId}')" class="btn-guardar mt-2">💾 Guardar</button>
+<button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm">Cancelar</button>
+`;
+overlay.classList.remove('hidden');
+}
+
+function guardarPublicidad(centroId) {
+const centro = obtenerCiudadActual().centrosComerciales.find(c => c.id === centroId);
+centro.publicidadSuperior.textoAlt = document.getElementById('input-texto-publicidad').value.trim();
+centro.publicidadSuperior.imagen = document.getElementById('input-imagen-publicidad').value.trim();
+centro.publicidadSuperior.enlace = document.getElementById('input-enlace-publicidad').value.trim();
+guardarDatos();
+agregarHistorial(📢 Publicidad actualizada en "${centro.nombre}"`);
+cerrarModal();
+renderizarCentros();
+toast('✅ Publicidad actualizada', 'success');
+}
+
+function abrirModalPais(paisId = null) {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+const pais = paisId ? datos.paises.find(p => p.id === paisId) : null;
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;${pais ? 'Editar' : 'Agregar'} País</h3>
+<input type="text" id="input-nombre-pais" class="input-form" placeholder="Nombre del país" value="{pais ? pais.bandera || '' : ''}">
+<button onclick="guardarPais('{paisId ? <button onclick="eliminarPais('${paisId}')" class="btn-eliminar w-full mt-2">🗑️ Eliminar País</button>: ''} &lt;button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm"&gt;Cancelar&lt;/button&gt;;
+overlay.classList.remove('hidden');
+}
+
+function guardarPais(paisId) {
+const nombre = document.getElementById('input-nombre-pais').value.trim();
+const bandera = document.getElementById('input-bandera-pais').value.trim();
+if (!nombre) { toast('❌ El nombre es obligatorio', 'error'); return; }
+if (paisId) {
+const pais = datos.paises.find(p => p.id === paisId);
+if (pais) { pais.nombre = nombre; pais.bandera = bandera; }
+} else {
+datos.paises.push({ id: 'pais_' + Date.now(), nombre, bandera, ciudades: [] });
+}
+guardarDatos();
+agregarHistorial(🌍${paisId ? 'Editado' : 'Agregado'} país: ${nombre});
+cerrarModal();
+renderizarPaises();
+toast('✅ País guardado', 'success');
+}
+
+function eliminarPais(paisId) {
+if (confirm('¿Eliminar este país y todo su contenido?')) {
+const pais = datos.paises.find(p => p.id === paisId);
+datos.paises = datos.paises.filter(p => p.id !== paisId);
+guardarDatos();
+agregarHistorial(🗑️ Eliminado país:${pais ? pais.nombre : paisId}`);
+cerrarModal();
+renderizarPaises();
+toast('🗑️ País eliminado', 'warning');
+}
+}
+
+function abrirModalCiudad(ciudadId = null) {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+const pais = obtenerPaisActual();
+const ciudad = ciudadId ? pais.ciudades.find(c => c.id === ciudadId) : null;
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;${ciudad ? 'Editar' : 'Agregar'} Ciudad</h3>
+<p class="text-sm text-gray-300 mb-2">País: <strong>${pais.nombre}&lt;/strong&gt;&lt;/p&gt; &lt;input type="text" id="input-nombre-ciudad" class="input-form" placeholder="Nombre" value="${ciudad ? ciudad.nombre : ''}">
+<input type="text" id="input-descripcion-ciudad" class="input-form" placeholder="Descripción" value="${ciudad ? ciudad.descripcion || '' : ''}"&gt; &lt;button onclick="guardarCiudad('${ciudadId || ''}')" class="btn-guardar mt-2">💾 Guardar</button>
+${ciudadId ?<button onclick="eliminarCiudad('${ciudadId}')" class="btn-eliminar w-full mt-2"&gt;🗑️ Eliminar&lt;/button> : ''}
+<button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm">Cancelar</button>
+`;
+overlay.classList.remove('hidden');
+}
+
+function guardarCiudad(ciudadId) {
+const nombre = document.getElementById('input-nombre-ciudad').value.trim();
+const descripcion = document.getElementById('input-descripcion-ciudad').value.trim();
+const pais = obtenerPaisActual();
+if (!nombre) { toast('❌ El nombre es obligatorio', 'error'); return; }
+if (ciudadId) {
+const c = pais.ciudades.find(ci => ci.id === ciudadId);
+if (c) { c.nombre = nombre; c.descripcion = descripcion; }
+} else {
+pais.ciudades.push({ id: 'ciudad_' + Date.now(), nombre, descripcion, centrosComerciales: [] });
+}
+guardarDatos();
+agregarHistorial(🏙️${ciudadId ? 'Editada' : 'Agregada'} ciudad: {pais.nombre})`);
+cerrarModal();
+renderizarCiudades();
+toast('✅ Ciudad guardada', 'success');
+}
+
+function eliminarCiudad(ciudadId) {
+if (confirm('¿Eliminar esta ciudad y todo su contenido?')) {
+const pais = obtenerPaisActual();
+const ciudad = pais.ciudades.find(c => c.id === ciudadId);
+pais.ciudades = pais.ciudades.filter(c => c.id !== ciudadId);
+guardarDatos();
+agregarHistorial(🗑️ Eliminada ciudad: ${ciudad ? ciudad.nombre : ciudadId}`);
+cerrarModal();
+renderizarCiudades();
+toast('🗑️ Ciudad eliminada', 'warning');
+}
+}
+
+function abrirModalCentro(centroId = null) {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+const ciudad = obtenerCiudadActual();
+const centro = centroId ? ciudad.centrosComerciales.find(c => c.id === centroId) : null;
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;${centro ? 'Editar' : 'Agregar'} Centro Comercial</h3>
+<p class="text-sm text-gray-300 mb-2">Ciudad: <strong>{centro ? centro.nombre : ''}">
+<input type="text" id="input-descripcion-centro" class="input-form" placeholder="Descripción" value="{centroId || ''}')" class="btn-guardar mt-2">💾 Guardar</button>
+latex
+{centroId ? `<button onclick="eliminarCentro('
+
+{centroId}')" class="btn-eliminar w-full mt-2">🗑️ Eliminar</button>: ''} &lt;button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm"&gt;Cancelar&lt;/button&gt;;
+overlay.classList.remove('hidden');
+}
+
+function guardarCentro(centroId) {
+const nombre = document.getElementById('input-nombre-centro').value.trim();
+const descripcion = document.getElementById('input-descripcion-centro').value.trim();
+const ciudad = obtenerCiudadActual();
+if (!nombre) { toast('❌ El nombre es obligatorio', 'error'); return; }
+if (centroId) {
+const c = ciudad.centrosComerciales.find(cc => cc.id === centroId);
+if (c) { c.nombre = nombre; c.descripcion = descripcion; }
+} else {
+ciudad.centrosComerciales.push({ id: 'centro_' + Date.now(), nombre, descripcion, publicidadSuperior: { imagen: '', enlace: '', textoAlt: '📢 ESPACIO PUBLICITARIO - DISPONIBLE' }, locales: [] });
+}
+guardarDatos();
+agregarHistorial(🏬 ${centroId ? 'Editado' : 'Agregado'} centro: ${nombre} (${ciudad.nombre})`);
+cerrarModal();
+renderizarCentros();
+toast('✅ Centro guardado', 'success');
+}
+
+function eliminarCentro(centroId) {
+if (confirm('¿Eliminar este centro y todo su contenido?')) {
+const ciudad = obtenerCiudadActual();
+const centro = ciudad.centrosComerciales.find(c => c.id === centroId);
+ciudad.centrosComerciales = ciudad.centrosComerciales.filter(c => c.id !== centroId);
+guardarDatos();
+agregarHistorial(🗑️ Eliminado centro:${centro ? centro.nombre : centroId}`);
+cerrarModal();
+renderizarCentros();
+toast('🗑️ Centro eliminado', 'warning');
+}
+}
+
+function abrirModalLocal(localId = null) {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+const centro = obtenerCentroActual();
+const local = localId ? centro.locales.find(l => l.id === localId) : null;
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;${local ? 'Editar' : 'Agregar'} Local</h3>
+<p class="text-sm text-gray-300 mb-2">Centro: <strong>${centro.nombre}&lt;/strong&gt;&lt;/p&gt; &lt;input type="text" id="input-nombre-local" class="input-form" placeholder="Nombre" value="${local ? local.nombre : ''}">
+<input type="text" id="input-rubro-local" class="input-form" placeholder="Rubro" value="${local ? local.rubro : ''}"&gt; &lt;input type="text" id="input-foto-local" class="input-form" placeholder="URL foto del local" value="${local ? local.fotoLocal || '' : ''}">
+<select id="input-categoria-local" class="input-form">
+<option value="PREMIUM" ${local && local.categoria === 'PREMIUM' ? 'selected' : ''}&gt;⭐ PREMIUM&lt;/option&gt; &lt;option value="ESTANDAR" ${local && local.categoria === 'ESTANDAR' ? 'selected' : ''}>📋 ESTÁNDAR</option>
+</select>
+<input type="text" id="input-dueno-local" class="input-form" placeholder="Nombre del dueño" value="${local ? local.nombreDueño || '' : ''}"&gt; &lt;input type="date" id="input-vencimiento-local" class="input-form" value="${local ? local.fechaVencimiento || '' : ''}">
+<button onclick="guardarLocal('${localId || ''}')" class="btn-guardar mt-2"&gt;💾 Guardar&lt;/button&gt; ${localId ? <button onclick="eliminarLocal('${localId}')" class="btn-eliminar w-full mt-2">🗑️ Eliminar</button>: ''} &lt;button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm"&gt;Cancelar&lt;/button&gt;;
+overlay.classList.remove('hidden');
+}
+
+function guardarLocal(localId) {
+const nombre = document.getElementById('input-nombre-local').value.trim();
+const rubro = document.getElementById('input-rubro-local').value.trim();
+const fotoLocal = document.getElementById('input-foto-local').value.trim();
+const categoria = document.getElementById('input-categoria-local').value;
+const nombreDueño = document.getElementById('input-dueno-local').value.trim();
+const fechaVencimiento = document.getElementById('input-vencimiento-local').value;
+const centro = obtenerCentroActual();
+
+if (!nombre) { toast('❌ El nombre es obligatorio', 'error'); return; }
+
+if (localId) {
+const l = centro.locales.find(lo => lo.id === localId);
+if (l) { l.nombre = nombre; l.rubro = rubro; l.fotoLocal = fotoLocal; l.categoria = categoria; l.nombreDueño = nombreDueño; l.fechaVencimiento = fechaVencimiento; }
+} else {
+const nuevaLlave = generarLlaveUnica(centro.nombre);
+centro.locales.push({ id: 'local_' + Date.now(), nombre, rubro, categoria, estadoAlquiler: 'AL_DIA', llaveAcceso: nuevaLlave, nombreDueño, fechaVencimiento, fotoLocal, productos: [] });
+}
+guardarDatos();
+agregarHistorial(🏪 ${localId ? 'Editado' : 'Agregado'} local: ${nombre} (${centro.nombre})`);
+cerrarModal();
+renderizarLocales();
+toast('✅ Local guardado', 'success');
+}
+
+function eliminarLocal(localId) {
+if (confirm('¿Eliminar este local y todos sus productos?')) {
+const centro = obtenerCentroActual();
+const local = centro.locales.find(l => l.id === localId);
+centro.locales = centro.locales.filter(l => l.id !== localId);
+guardarDatos();
+agregarHistorial(🗑️ Eliminado local:${local ? local.nombre : localId}`);
+cerrarModal();
+renderizarLocales();
+toast('🗑️ Local eliminado', 'warning');
+}
+}
+
+function abrirModalProducto(productoId = null) {
+const overlay = document.getElementById('modal-overlay');
+const contenido = document.getElementById('modal-contenido');
+const local = obtenerLocalActual();
+const producto = productoId ? local.productos.find(p => p.id === productoId) : null;
+contenido.innerHTML = &lt;h3 class="text-xl font-bold text-oro mb-4"&gt;${producto ? 'Editar' : 'Agregar'} Producto</h3>
+<p class="text-sm text-gray-300 mb-2">Local: <strong>${local.nombre}&lt;/strong&gt;&lt;/p&gt; &lt;input type="text" id="input-nombre-producto" class="input-form" placeholder="Nombre" value="${producto ? producto.nombre : ''}">
+<input type="text" id="input-descripcion-producto" class="input-form" placeholder="Descripción" value="${producto ? producto.descripcion || '' : ''}"&gt; &lt;input type="number" id="input-precio-producto" class="input-form" placeholder="Precio en $" value="${producto ? producto.precio : ''}" min="0"&gt; &lt;input type="text" id="input-imagen-producto" class="input-form" placeholder="URL de la imagen" value="${producto ? producto.imagen || '' : ''}">
+<button onclick="guardarProducto('${productoId || ''}')" class="btn-guardar mt-2"&gt;💾 Guardar&lt;/button&gt; ${productoId ? <button onclick="eliminarProducto('${productoId}')" class="btn-eliminar w-full mt-2">🗑️ Eliminar</button>: ''} &lt;button onclick="cerrarModal()" class="w-full text-center text-gray-400 hover:text-white mt-3 text-sm"&gt;Cancelar&lt;/button&gt;;
+overlay.classList.remove('hidden');
+}
+
+function guardarProducto(productoId) {
+const nombre = document.getElementById('input-nombre-producto').value.trim();
+const descripcion = document.getElementById('input-descripcion-producto').value.trim();
+const precio = Math.max(0, parseInt(document.getElementById('input-precio-producto').value) || 0);
+const imagen = document.getElementById('input-imagen-producto').value.trim();
+const local = obtenerLocalActual();
+if (!nombre) { toast('❌ El nombre es obligatorio', 'error'); return; }
+
+if (productoId) {
+const p = local.productos.find(pr => pr.id === productoId);
+if (p) { p.nombre = nombre; p.descripcion = descripcion; p.precio = precio; p.imagen = imagen; }
+} else {
+local.productos.push({ id: 'prod_' + Date.now(), nombre, descripcion, precio, imagen });
+}
+guardarDatos();
+cerrarModal();
+renderizarProductos();
+toast('✅ Producto guardado', 'success');
+}
+
+function eliminarProducto(productoId) {
+if (confirm('¿Eliminar este producto?')) {
+const local = obtenerLocalActual();
+local.productos = local.productos.filter(p => p.id !== productoId);
+guardarDatos();
+renderizarProductos();
+toast('🗑️ Producto eliminado', 'warning');
+}
+}
+
+// ============ INFORME ============
+function generarInforme() {
+let todosLocales = [], totalPaises = datos.paises.length, totalCiudades = 0, totalCentros = 0, totalLocales = 0;
+let localesPremium = 0, localesEstandar = 0, localesAlDia = [], localesDeuda = [], localesBloqueados = [], localesVacantes = [];
+let espaciosPublicitarios = [], vencimientosProximos = [];
+const hoy = new Date(); hoy.setHours(0,0,0,0);
+const en30Dias = new Date(hoy); en30Dias.setDate(en30Dias.getDate() + 30);
+
+datos.paises.forEach(pais => {
+pais.ciudades.forEach(ciudad => {
+totalCiudades++;
+ciudad.centrosComerciales.forEach(centro => {
+totalCentros++;
+espaciosPublicitarios.push({ nombreCentro: centro.nombre, nombreCiudad: ciudad.nombre, nombrePais: pais.nombre, ocupado: centro.publicidadSuperior.imagen && centro.publicidadSuperior.imagen.length > 0 });
+centro.locales.forEach(local => {
+totalLocales++;
+const info = { nombre: local.nombre, dueño: local.nombreDueño || 'Sin dueño', llave: local.llaveAcceso || 'Sin llave', categoria: local.categoria, estado: local.estadoAlquiler, centro: centro.nombre, ciudad: ciudad.nombre, pais: pais.nombre, fechaVencimiento: local.fechaVencimiento };
+if (local.categoria === 'PREMIUM') localesPremium++; else localesEstandar++;
+switch(local.estadoAlquiler) {
+case 'AL_DIA': localesAlDia.push(info); break;
+case 'DEUDA': localesDeuda.push(info); break;
+case 'BLOQUEADO': localesBloqueados.push(info); break;
+case 'VACANTE': localesVacantes.push(info); break;
+}
+if (local.fechaVencimiento) {
+const venc = new Date(local.fechaVencimiento + 'T00:00:00');
+if (venc <= en30Dias) {
+vencimientosProximos.push({ ...info, fechaVenc: local.fechaVencimiento, diasRestantes: Math.ceil((venc - hoy) / (10006060*24)) });
+}
+}
+});
+});
+});
+});
+
+vencimientosProximos.sort((a, b) => a.diasRestantes - b.diasRestantes);
+
+const ingresoPremium = localesAlDia.filter(l => l.categoria === 'PREMIUM').length * 50000;
+const ingresoEstandar = localesAlDia.filter(l => l.categoria === 'ESTANDAR').length * 25000;
+const ingresoTotalEstimado = ingresoPremium + ingresoEstandar;
+const porcentajeOcupacion = totalLocales > 0 ? Math.round((localesAlDia.length / totalLocales) * 100) : 0;
+const espaciosLibres = espaciosPublicitarios.filter(e => !e.ocupado).length;
+const llavesCambiadas = historialCambios.filter(h => h.accion.includes('Cambio de llave')).length;
+
+const fecha = new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+let informe = 📑 INFORME DE GESTIÓN - GOL CENTRAL 📅 Fecha: ${fecha}
+
+═══════════════════════════════════
+🔢 RESUMEN GENERAL
+═══════════════════════════════════
+• Total de Países: ${totalPaises} • Total de Ciudades: ${totalCiudades}
+• Total de Centros Comerciales: ${totalCentros} • Total de Locales: ${totalLocales}
+• Locales PREMIUM: ${localesPremium} | Locales ESTÁNDAR: ${localesEstandar}
+• Ocupación: ${porcentajeOcupacion}% • Llaves cambiadas este período: ${llavesCambiadas}
+
+═══════════════════════════════════
+💰 ESTADO DE PAGOS Y ALQUILERES
+═══════════════════════════════════
+
+✅ AL DÍA (${localesAlDia.length} locales): ${localesAlDia.length > 0 ? localesAlDia.map(l => •${l.nombre} ({l.ciudad}) - Dueño: ${l.dueño}).join('\n') : ' • No hay locales al día'}
+
+⚠️ CON DEUDA - ¡COBRAR YA! (${localesDeuda.length} locales): ${localesDeuda.length > 0 ? localesDeuda.map(l => •${l.nombre} ({l.ciudad}) - Dueño: ${l.dueño} ⚠️).join('\n') : ' • No hay locales con deuda ✅'}
+
+🔴 BLOQUEADOS (${localesBloqueados.length} locales): ${localesBloqueados.length > 0 ? localesBloqueados.map(l => •${l.nombre} ({l.ciudad}) - LLAVE DESACTIVADA`).join('\n') : ' • No hay locales bloqueados ✅'}
+
+⚪ VACANTES - ¡DISPONIBLE PARA ALQUILAR! ({localesVacantes.length > 0 ? localesVacantes.map(l => • ${l.nombre} (${l.centro}, ${l.ciudad}) - CATEGORÍA: ${l.categoria}).join('\n') : ' • No hay locales vacantes'}
+
+═══════════════════════════════════
+📅 PRÓXIMOS VENCIMIENTOS (30 días)
+═══════════════════════════════════
+latex
+{vencimientosProximos.length &gt; 0 ? vencimientosProximos.map(v =&gt; ` • 
+
+{v.nombre} ({v.dueño} - ${v.diasRestantes &lt; 0 ? '🚨 ¡VENCIDO! (' + Math.abs(v.diasRestantes) + ' días)' : v.diasRestantes === 0 ? '⚠️ VENCE HOY' : '📅 Vence en ' + v.diasRestantes + ' días (' + new Date(v.fechaVenc + 'T00:00:00').toLocaleDateString('es-AR') + ')'}).join('\n') : ' • No hay vencimientos próximos ✅'}
+
+═══════════════════════════════════
+📢 ESPACIOS PUBLICITARIOS
+═══════════════════════════════════
+${espaciosPublicitarios.map(e =&gt; • {e.nombreCiudad}, {e.ocupado ? 'OCUPADO ✅' : 'LIBRE ⚠️ - ¡VENDER!'}).join('\n')} • Espacios publicitarios libres: ${espaciosLibres}
+• Valor estimado espacios libres: `${formatearPrecio(espaciosLibres * 15000)}
+
+═══════════════════════════════════
+💵 INGRESOS ESTIMADOS
+═══════════════════════════════════
+• Ingresos Locales Premium: {formatearPrecio(ingresoEstandar)}
+• Ingreso Total Estimado: $`{formatearPrecio(ingresoTotalEstimado)}
+
+═══════════════════════════════════
+📋 PASOS RECOMENDADOS
+═══════════════════════════════════
+${localesDeuda.length &gt; 0 ? '1️⃣ LLAMAR a dueños con DEUDA para que paguen o se les BLOQUEARÁ el acceso.\n' : ''}${localesVacantes.length > 0 ? ${localesDeuda.length &gt; 0 ? '2️⃣' : '1️⃣'} OFRECER los locales VACANTES a nuevos inquilinos.\n` : ''}$`{espaciosLibres &gt; 0 ?${(localesDeuda.length>0?1:0)+(localesVacantes.length>0?1:0)+1}️⃣ VENDER los espacios publicitarios LIBRES (latex
+{espaciosLibres} disponibles).\n` : ''}
+
+{vencimientosProximos.filter(v=>v.diasRestantes<=7).length>0?'⚠️ Hay vencimientos PRÓXIMOS o VENCIDOS. Revisar la sección de vencimientos.\n':''}✅ Mantener control mensual de pagos y llaves.`;
+
+const overlay = document.getElementById('modal-informe-overlay');
+const contenido = document.getElementById('modal-informe-contenido');
+contenido.innerHTML = &lt;div class="flex justify-between items-center mb-4"&gt; &lt;h3 class="text-xl font-bold text-oro"&gt;📊 Informe de Gestión&lt;/h3&gt; &lt;button onclick="cerrarModalInforme()" class="text-gray-400 hover:text-white text-2xl"&gt;&times;&lt;/button&gt; &lt;/div&gt; &lt;div class="informe-texto" id="texto-informe"&gt;${informe}&lt;/div&gt; &lt;button onclick="copiarInforme()" class="btn-copiar" id="btn-copiar-informe"&gt;📋 COPIAR INFORME COMPLETO&lt;/button&gt; &lt;p class="text-xs text-gray-500 text-center mt-2"&gt;Pega este informe en tu IA para que te diga qué hacer&lt;/p&gt;;
+overlay.classList.remove('hidden');
+}
+
+function copiarInforme() {
+const texto = document.getElementById('texto-informe').innerText;
+const btn = document.getElementById('btn-copiar-informe');
+navigator.clipboard.writeText(texto).then(() => {
+btn.textContent = '✅ ¡COPIADO!';
+btn.classList.add('copiado');
+setTimeout(() => { btn.textContent = '📋 COPIAR INFORME COMPLETO'; btn.classList.remove('copiado'); }, 3000);
+}).catch(() => {
+const textarea = document.createElement('textarea');
+textarea.value = texto;
+document.body.appendChild(textarea);
+textarea.select();
+document.execCommand('copy');
+document.body.removeChild(textarea);
+btn.textContent = '✅ ¡COPIADO!';
+btn.classList.add('copiado');
+setTimeout(() => { btn.textContent = '📋 COPIAR INFORME COMPLETO'; btn.classList.remove('copiado'); }, 3000);
+});
+}
+
+// ============ INICIALIZACIÓN ============
+document.addEventListener('DOMContentLoaded', function() {
+const hayDatos = cargarDatos();
+if (!hayDatos) {
+datos = JSON.parse(JSON.stringify(DATOS_INICIALES));
+guardarDatos();
+}
+actualizarInfoGuardado();
+volverAInicio();
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) { if (e.target === this) cerrarModal(); });
+document.getElementById('modal-informe-overlay').addEventListener('click', function(e) { if (e.target === this) cerrarModalInforme(); });
+});
+</script>
+</body>
+</html>
