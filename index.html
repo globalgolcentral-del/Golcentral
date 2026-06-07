@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gol Central - Simplificado</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+background: #0A0E27;
+color: white;
+font-family: Arial, sans-serif;
+min-height: 100vh;
+}
+.container { max-width: 600px; margin: 0 auto; padding: 20px; }
+.btn {
+display: block;
+width: 100%;
+padding: 15px;
+margin: 10px 0;
+background: #0F3460;
+border: 2px solid #FFD700;
+border-radius: 12px;
+color: white;
+font-size: 18px;
+font-weight: bold;
+cursor: pointer;
+text-align: center;
+}
+.btn:hover { background: #16213E; transform: scale(1.02); }
+.btn-oro { background: #FFD700; color: #0A0E27; border-color: #FFD700; }
+.candado {
+position: fixed;
+bottom: 20px;
+right: 20px;
+width: 50px;
+height: 50px;
+background: #FFD700;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+font-size: 24px;
+}
+.modal {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.9);
+z-index: 100;
+align-items: center;
+justify-content: center;
+}
+.modal-content {
+background: #16213E;
+padding: 30px;
+border-radius: 20px;
+width: 90%;
+max-width: 400px;
+border: 2px solid #FFD700;
+}
+input {
+width: 100%;
+padding: 12px;
+margin: 10px 0;
+background: #0A0E27;
+border: 1px solid #FFD700;
+border-radius: 8px;
+color: white;
+}
+.hidden { display: none; }
+.tarjeta {
+background: #0F3460;
+padding: 15px;
+margin: 10px 0;
+border-radius: 12px;
+cursor: pointer;
+border-left: 4px solid #FFD700;
+}
+.tarjeta:hover { background: #16213E; }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA INICIO -->
+<div id="pantalla-inicio" class="container" style="text-align: center; padding-top: 80px;">
+<h1 style="font-size: 48px; color: #FFD700; margin-bottom: 20px;">GOL CENTRAL</h1>
+<p style="margin-bottom: 40px;">Tu mundo de compras, todo en un solo lugar</p>
+<button class="btn" onclick="verPaises()">🌍 VER PAÍSES</button>
+<button class="btn" onclick="mostrarLogin()">🔐 ACCESO DUEÑOS</button>
+<div class="candado" onclick="mostrarLogin()">🔒</div>
+</div>
+
+<!-- PANTALLA PAÍSES -->
+<div id="pantalla-paises" class="container hidden">
+<button class="btn" style="background: #E94560;" onclick="volverInicio()">← VOLVER</button>
+<h2 style="margin: 20px 0;">🌎 Países</h2>
+<div id="lista-paises"></div>
+</div>
+
+<!-- PANTALLA CIUDADES -->
+<div id="pantalla-ciudades" class="container hidden">
+<button class="btn" style="background: #E94560;" onclick="volverPaises()">← VOLVER</button>
+<h2 style="margin: 20px 0;" id="titulo-ciudad"></h2>
+<div id="lista-ciudades"></div>
+</div>
+
+<!-- PANTALLA CENTROS -->
+<div id="pantalla-centros" class="container hidden">
+<button class="btn" style="background: #E94560;" onclick="volverCiudades()">← VOLVER</button>
+<h2 style="margin: 20px 0;" id="titulo-centro"></h2>
+<div id="lista-centros"></div>
+</div>
+
+<!-- PANTALLA LOCALES -->
+<div id="pantalla-locales" class="container hidden">
+<button class="btn" style="background: #E94560;" onclick="volverCentros()">← VOLVER</button>
+<h2 style="margin: 20px 0;" id="titulo-local"></h2>
+<div id="lista-locales"></div>
+</div>
+
+<!-- PANTALLA PRODUCTOS -->
+<div id="pantalla-productos" class="container hidden">
+<button class="btn" style="background: #E94560;" onclick="volverLocales()">← VOLVER</button>
+<h2 style="margin: 20px 0;" id="titulo-producto"></h2>
+<div id="lista-productos"></div>
+</div>
+
+<!-- MODAL LOGIN -->
+<div id="modal-login" class="modal">
+<div class="modal-content">
+<h3 style="color: #FFD700; margin-bottom: 20px;">🔐 Acceso</h3>
+<input type="password" id="password-web" placeholder="Contraseña Dueño Web">
+<input type="text" id="llave-local" placeholder="Llave del Local">
+<button class="btn" style="margin-top: 10px;" onclick="iniciarSesion()">Ingresar</button>
+<button class="btn" style="background: #E94560; margin-top: 5px;" onclick="cerrarLogin()">Cancelar</button>
+</div>
+</div>
+
+<script>
+// DATOS DE EJEMPLO
+let datos = {
+paises: [
+{ id: 1, nombre: "Paraguay", bandera: "🇵🇾", ciudades: [
+{ id: 11, nombre: "9 de Julio", centros: [
+{ id: 111, nombre: "Town Festival", locales: [
+{ id: 1111, nombre: "Parrilla", rubro: "Restaurante", productos: [
+{ nombre: "Asado", precio: 65000, descripcion: "Corte especial" },
+{ nombre: "Milanesa", precio: 80000, descripcion: "Napolitana" }
+ ]},
+{ id: 1112, nombre: "Cocina", rubro: "Restaurante", productos: [
+{ nombre: "Pizza", precio: 45000, descripcion: "Muzzarella" }
+ ]}
+]}
+]}
+]},
+{ id: 2, nombre: "Argentina", bandera: "🇦🇷", ciudades: [
+{ id: 21, nombre: "Buenos Aires", centros: [
+{ id: 211, nombre: "Shopping Central", locales: [] }
+]}
+]}
+]
+};
+
+let usuarioActual = null;
+let navegacion = { pais: null, ciudad: null, centro: null, local: null };
+
+function ocultarTodas() {
+document.getElementById('pantalla-inicio').classList.add('hidden');
+document.getElementById('pantalla-paises').classList.add('hidden');
+document.getElementById('pantalla-ciudades').classList.add('hidden');
+document.getElementById('pantalla-centros').classList.add('hidden');
+document.getElementById('pantalla-locales').classList.add('hidden');
+document.getElementById('pantalla-productos').classList.add('hidden');
+}
+
+function volverInicio() { ocultarTodas(); document.getElementById('pantalla-inicio').classList.remove('hidden'); }
+
+function verPaises() {
+ocultarTodas();
+document.getElementById('pantalla-paises').classList.remove('hidden');
+let html = '';
+datos.paises.forEach(pais => {
+html += <div class="tarjeta" onclick="verCiudades(${pais.id})">
+<span style="font-size: 30px;">${pais.bandera}&lt;/span&gt; &lt;h3&gt;${pais.nombre}</h3>
+</div>`;
+});
+document.getElementById('lista-paises').innerHTML = html;
+}
+
+function verCiudades(paisId) {
+navegacion.pais = datos.paises.find(p => p.id === paisId);
+ocultarTodas();
+document.getElementById('pantalla-ciudades').classList.remove('hidden');
+document.getElementById('titulo-ciudad').innerHTML = ``${navegacion.pais.bandera} latex
+{navegacion.pais.nombre} - Ciudades`; let html = ''; navegacion.pais.ciudades.forEach(ciudad =&gt; { html += `<div class="tarjeta" onclick="verCentros(
+
+{ciudad.id})">
+<h3>🏙️ ${ciudad.nombre}&lt;/h3&gt; &lt;/div>;
+});
+document.getElementById('lista-ciudades').innerHTML = html;
+}
+
+function verCentros(ciudadId) {
+navegacion.ciudad = navegacion.pais.ciudades.find(c => c.id === ciudadId);
+ocultarTodas();
+document.getElementById('pantalla-centros').classList.remove('hidden');
+document.getElementById('titulo-centro').innerHTML = 🏬${navegacion.ciudad.nombre} - Centros Comerciales; let html = ''; navegacion.ciudad.centros.forEach(centro =&gt; { html +=<div class="tarjeta" onclick="verLocales({centro.nombre}</h3>
+</div>`;
+});
+document.getElementById('lista-centros').innerHTML = html;
+}
+
+function verLocales(centroId) {
+navegacion.centro = navegacion.ciudad.centros.find(c => c.id === centroId);
+ocultarTodas();
+document.getElementById('pantalla-locales').classList.remove('hidden');
+document.getElementById('titulo-local').innerHTML = 🏪 ${navegacion.centro.nombre} - Locales; let html = ''; navegacion.centro.locales.forEach(local =&gt; { html +=<div class="tarjeta" onclick="verProductos(${local.id})"&gt; &lt;h3&gt;🏠 ${local.nombre}</h3>
+<p>${local.rubro}&lt;/p&gt; &lt;/div>;
+});
+if (html === '') html = '<p>No hay locales disponibles</p>';
+document.getElementById('lista-locales').innerHTML = html;
+}
+
+function verProductos(localId) {
+navegacion.local = navegacion.centro.locales.find(l => l.id === localId);
+ocultarTodas();
+document.getElementById('pantalla-productos').classList.remove('hidden');
+document.getElementById('titulo-producto').innerHTML = 🛍️ ${navegacion.local.nombre} - Productos; let html = ''; navegacion.local.productos.forEach(prod =&gt; { html +=<div class="tarjeta">
+<h3>🍽️ ${prod.nombre}&lt;/h3&gt; &lt;p&gt;${prod.descripcion}</p>
+<p style="color: #FFD700; font-size: 20px;">Gs ${prod.precio.toLocaleString()}&lt;/p&gt; &lt;/div>;
+});
+if (html === '') html = '<p>No hay productos disponibles</p>';
+document.getElementById('lista-productos').innerHTML = html;
+}
+
+function volverPaises() { verPaises(); }
+function volverCiudades() { verCiudades(navegacion.pais.id); }
+function volverCentros() { verCentros(navegacion.ciudad.id); }
+function volverLocales() { verLocales(navegacion.centro.id); }
+
+function mostrarLogin() { document.getElementById('modal-login').style.display = 'flex'; }
+function cerrarLogin() { document.getElementById('modal-login').style.display = 'none'; }
+
+function iniciarSesion() {
+const pass = document.getElementById('password-web').value;
+const llave = document.getElementById('llave-local').value;
+
+if (pass === 'Golcentral2026') {
+usuarioActual = { tipo: 'duenoweb' };
+cerrarLogin();
+alert('✅ Bienvenido Dueño Web');
+verPaises();
+} else if (llave === 'TF-001-A1B2') {
+usuarioActual = { tipo: 'duenolocal' };
+cerrarLogin();
+alert('✅ Bienvenido Dueño del Local Parrilla');
+// Navegar directamente al local
+navegacion.pais = datos.paises[0];
+navegacion.ciudad = navegacion.pais.ciudades[0];
+navegacion.centro = navegacion.ciudad.centros[0];
+navegacion.local = navegacion.centro.locales[0];
+verProductos(navegacion.local.id);
+} else {
+alert('❌ Contraseña o llave incorrecta');
+}
+}
+
+// Inicializar
+volverInicio();
+</script>
+</body>
+</html>
