@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Gol Central - Centro Comercial Virtual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #0a0a0a; color: #e5e5e5; font-family: system-ui, 'Segoe UI', sans-serif; }
+        .text-oro { color: #f9b800; }
+        .border-oro { border-color: #f9b800; }
+        .bg-oro { background: #f9b800; }
+        .btn-oro { background: linear-gradient(135deg, #f9b800, #e0a800); color: #000; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(249,184,0,0.3); }
+        .btn-oro:hover { transform: scale(1.02); box-shadow: 0 6px 25px rgba(249,184,0,0.5); }
+        .card-premium { background: linear-gradient(135deg, #1a1a3e, #0a0a2a); border: 2px solid #f9b800; border-radius: 1rem; padding: 0.5rem; transition: 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+        .card-premium:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(249,184,0,0.3); }
+        .card-estandar { background: #1a1a1a; border: 1px solid #0057b8; border-radius: 0.75rem; padding: 0.4rem; transition: 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+        .card-estandar:hover { transform: scale(1.02); border-color: #f9b800; }
+        .estado-al-dia { background: #00c853; color: black; border-radius: 9999px; padding: 2px 10px; font-size: 0.6rem; font-weight: bold; display: inline-block; }
+        .estado-deuda { background: #ffa000; color: black; border-radius: 9999px; padding: 2px 10px; font-size: 0.6rem; }
+        .estado-vacante { background: #6b7280; color: white; border-radius: 9999px; padding: 2px 10px; font-size: 0.6rem; }
+        .estado-bloqueado { background: #dc2626; color: white; border-radius: 9999px; padding: 2px 10px; font-size: 0.6rem; }
+        .abierto { background: #00c853; color: black; border-radius: 9999px; padding: 2px 12px; font-size: 0.7rem; display: inline-block; }
+        .cerrado { background: #dc2626; color: white; border-radius: 9999px; padding: 2px 12px; font-size: 0.7rem; }
+        .badge-categoria { background: rgba(249,184,0,0.2); color: #f9b800; padding: 2px 8px; border-radius: 12px; font-size: 0.6rem; }
+        .img-cover { width: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #1e293b; border-radius: 8px; }
+        .img-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; cursor: pointer; }
+        .img-cover img:hover { transform: scale(1.02); }
+        .country-img { height: 70px; }
+        .city-img { height: 80px; }
+        .mall-img { height: 90px; }
+        .store-img { height: 100px; }
+        .product-img { height: 140px; width: 100%; }
+        .product-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
+        .product-img img:hover { transform: scale(1.03); }
+        .pub-container { width: 100%; height: 160px; overflow: hidden; background: #1e293b; border-radius: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+        .pub-container img { width: 100%; height: 100%; object-fit: cover; }
+        .pub-container .pub-text { text-align: center; padding: 1rem; cursor: default; }
+        .filtro-btn { background: #2d2d2d; border: 1px solid #555; color: #ccc; padding: 4px 12px; border-radius: 20px; cursor: pointer; }
+        .filtro-btn.activo { background: #f9b800; color: black; }
+        .paginacion-btn { background: #2d2d2d; border: 1px solid #f9b800; color: white; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+        .paginacion-btn.activo { background: #f9b800; color: black; }
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-contenido { background: #1a1a1a; border: 2px solid #f9b800; border-radius: 1.5rem; padding: 1.5rem; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1f1f1f; border: 2px solid #f9b800; border-radius: 12px; padding: 12px 24px; opacity: 0; transition: opacity 0.3s; z-index: 2000; pointer-events: none; white-space: nowrap; }
+        .toast.show { opacity: 1; }
+        /* Grillas de locales (se mantienen) */
+        .grid-premium { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+        .grid-estandar { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; }
+        /* Grilla de productos estilo catálogo */
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+        @media (max-width: 640px) { 
+            .grid-premium { grid-template-columns: repeat(2,1fr); } 
+            .grid-estandar { grid-template-columns: repeat(2,1fr); }
+            .grid-productos { grid-template-columns: repeat(2,1fr); gap: 0.75rem; }
+        }
+        .glass { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(251, 191, 36, 0.15); }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.5); }
+        .edit-btn, .delete-btn { position: absolute; top: 8px; background: rgba(0,0,0,0.7); color: white; border-radius: 9999px; padding: 4px 8px; font-size: 12px; cursor: pointer; opacity: 0.9; transition: 0.2s; z-index: 10; }
+        .edit-btn { right: 40px; background: #2563eb; }
+        .delete-btn { right: 8px; background: #dc2626; }
+        .edit-btn:hover, .delete-btn:hover { opacity: 1; transform: scale(1.05); }
+        .admin-toolbar { background: #1e293b; border-bottom: 1px solid #f9b800; padding: 6px 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; position: sticky; top: 60px; z-index: 40; }
+        .admin-toolbar button { background: #334155; color: white; border-radius: 20px; padding: 4px 12px; font-size: 0.75rem; transition: 0.2s; }
+        .admin-toolbar button:hover { background: #f9b800; color: black; }
+        .cart-sidebar { position: fixed; right: 0; top: 80px; width: 340px; max-width: 90vw; background: #1a1a1a; border-left: 3px solid #f9b800; border-radius: 12px 0 0 12px; box-shadow: -5px 0 25px rgba(0,0,0,0.8); z-index: 110; transition: 0.3s; transform: translateX(100%); padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; max-height: calc(100vh - 80px); overflow-y: auto; }
+        .cart-sidebar.open { transform: translateX(0); }
+        .cart-item { background: #2d2d2d; border-radius: 12px; padding: 8px; margin-bottom: 8px; }
+        .cart-item-controls { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+        .lightbox { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); z-index: 2000; display: none; align-items: center; justify-content: center; cursor: pointer; }
+        .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .product-card { background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 12px; padding: 0.75rem; transition: 0.2s; }
+        .product-card:hover { border-color: #f9b800; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(249,184,0,0.15); }
+        .product-card .product-precio { color: #f9b800; font-weight: bold; font-size: 1.1rem; }
+        .product-card .product-nombre { font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem; }
+        .product-card .product-categoria { font-size: 0.7rem; color: #94a3b8; }
+        .product-card .btn-add-cart { width: 100%; background: #16a34a; color: white; border: none; border-radius: 8px; padding: 6px; font-size: 0.8rem; font-weight: bold; transition: 0.2s; cursor: pointer; margin-top: 0.5rem; }
+        .product-card .btn-add-cart:hover { background: #15803d; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+<div id="lightbox" class="lightbox" onclick="cerrarLightbox()"><img id="lightboxImg" src=""></div>
+
+<header class="glass sticky top-0 z-50 border-b border-oro/20 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="volverAInicio()">
+            <div class="w-10 h-10 rounded-full bg-oro flex items-center justify-center text-dark font-extrabold text-lg"><i class="fas fa-globe-americas"></i></div>
+            <div><h1 class="text-xl md:text-2xl font-extrabold text-oro">GLOBAL</h1><p class="text-xs text-slate-400 -mt-1">GOLCENTRAL</p></div>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4">
+            <button onclick="volverAInicio()" class="hidden sm:flex items-center gap-1 text-slate-300 hover:text-oro transition px-3 py-1.5 rounded-lg hover:bg-slate-700/50 text-sm"><i class="fas fa-home"></i> <span>Inicio</span></button>
+            <button id="btnLoginTop" onclick="mostrarModalLogin()" class="flex items-center gap-1 text-slate-300 hover:text-oro transition px-3 py-1.5 rounded-lg hover:bg-slate-700/50 text-sm"><i class="fas fa-key"></i> <span class="hidden sm:inline">Acceder</span></button>
+            <span id="userBadge" class="hidden text-xs bg-oro/20 text-oro px-3 py-1 rounded-full font-semibold"></span>
+            <button id="btnLogout" onclick="cerrarSesion()" class="hidden text-red-400 hover:text-red-300 transition px-2 py-1 rounded-lg hover:bg-red-900/30 text-sm"><i class="fas fa-sign-out-alt"></i></button>
+            <button id="cartIcon" class="relative text-oro hover:text-oro/80 transition text-xl hidden" onclick="toggleCart()"><i class="fas fa-shopping-cart"></i><span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span></button>
+        </div>
+    </div>
+</header>
+
+<div id="adminToolbar" class="admin-toolbar hidden">
+    <button onclick="mostrarGestionLlaves()"><i class="fas fa-key"></i> Gestión de Llaves</button>
+    <button onclick="mostrarGestionPublicidades()"><i class="fas fa-ad"></i> Publicidades</button>
+    <button onclick="generarInformeMASA()"><i class="fas fa-chart-line"></i> Informe MASA</button>
+    <button onclick="exportarDatos()"><i class="fas fa-download"></i> Exportar</button>
+    <button onclick="document.getElementById('inputImport').click()"><i class="fas fa-upload"></i> Importar</button>
+    <input type="file" id="inputImport" accept=".json" class="hidden" onchange="importarDatos(event)">
+    <button onclick="restablecerDatos()"><i class="fas fa-trash-restore"></i> Restablecer</button>
+    <button onclick="verHistorial()"><i class="fas fa-history"></i> Historial</button>
+    <button onclick="configurarWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+</div>
+
+<main id="mainContent" class="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-6"></main>
+
+<footer class="border-t border-slate-700/50 py-4 px-4 text-center text-xs text-slate-500">
+    <p>© 2026 Global Golcentral · Todos los derechos reservados · <span class="text-oro">Paraguay & Argentina</span></p>
+</footer>
+
+<!-- Carrito lateral -->
+<div id="cartSidebar" class="cart-sidebar">
+    <div class="flex justify-between items-center"><h3 class="text-oro font-bold"><i class="fas fa-shopping-cart"></i> Carrito</h3><button onclick="toggleCart()" class="text-slate-400"><i class="fas fa-times"></i></button></div>
+    <div id="cartItemsList"></div>
+    <div class="border-t border-slate-600 pt-2"><p>Total: <span id="cartTotal" class="text-oro font-bold">Gs 0</span></p></div>
+    <div><input type="text" id="cartNombre" placeholder="Tu nombre" class="w-full bg-slate-700 rounded p-2 text-sm"></div>
+    <div><input type="text" id="cartDireccion" placeholder="Dirección" class="w-full bg-slate-700 rounded p-2 text-sm"></div>
+    <div><input type="tel" id="cartTelefono" placeholder="Teléfono" class="w-full bg-slate-700 rounded p-2 text-sm"></div>
+    <button onclick="enviarPedidoWhatsApp()" class="btn-oro w-full py-2 rounded-xl text-sm"><i class="fab fa-whatsapp"></i> Enviar pedido</button>
+</div>
+
+<!-- MODALES -->
+<div id="modalLogin" class="modal-overlay" onclick="cerrarModalSiFondo(event, 'modalLogin')">
+    <div class="glass rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl border-oro/30" onclick="event.stopPropagation()">
+        <h3 class="text-xl font-bold text-oro mb-4"><i class="fas fa-lock mr-2"></i>Acceder al Sistema</h3>
+        <div class="space-y-4">
+            <div><label class="block text-sm font-medium text-slate-300 mb-1">Tipo de acceso</label>
+                <select id="loginTipo" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-oro outline-none" onchange="toggleLoginFields()">
+                    <option value="owner" selected>Dueño de Local (Llave)</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <div id="loginPassGroup" class="hidden"><label class="block text-sm font-medium text-slate-300 mb-1">Contraseña</label><input type="password" id="loginPassword" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white"></div>
+            <div id="loginKeyGroup"><label class="block text-sm font-medium text-slate-300 mb-1">Llave del Local (ej: 12345678/townfestival)</label><input type="text" id="loginKey" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white font-mono"></div>
+            <button onclick="procesarLogin()" class="btn-oro w-full py-3 rounded-xl text-lg"><i class="fas fa-arrow-right-to-bracket mr-2"></i> Ingresar</button>
+            <p id="loginError" class="text-red-400 text-sm hidden text-center"></p>
+        </div>
+        <button onclick="cerrarModal('modalLogin')" class="absolute top-3 right-3 text-slate-400 hover:text-white text-xl"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+
+<div id="modalCRUD" class="modal-overlay" onclick="cerrarModalSiFondo(event, 'modalCRUD')">
+    <div class="modal-contenido" onclick="event.stopPropagation()" id="modalCRUDContent"></div>
+</div>
+
+<div id="modalConfirm" class="modal-overlay" onclick="cerrarModalSiFondo(event, 'modalConfirm')">
+    <div class="glass rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl border-red-500/30 text-center" onclick="event.stopPropagation()">
+        <i class="fas fa-exclamation-triangle text-5xl text-yellow-400 mb-3"></i>
+        <p id="confirmMsg" class="text-white mb-4"></p>
+        <div class="flex gap-3 justify-center">
+            <button onclick="ejecutarConfirmacion()" class="btn-oro px-6 py-2 rounded-xl">Sí, confirmar</button>
+            <button onclick="cerrarModal('modalConfirm')" class="bg-slate-600 text-white px-6 py-2 rounded-xl hover:bg-slate-500 transition">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ======================== FUNCIONES AUXILIARES ========================
+function toast(msg) { let el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000); }
+function cerrarModal(id) { const modal = document.getElementById(id); modal.style.display = 'none'; modal.classList.remove('flex'); modal.classList.add('hidden'); }
+function cerrarModalSiFondo(event, id) { if (event.target === event.currentTarget) cerrarModal(id); }
+function formatearPrecio(precio) { return `Gs ${precio.toLocaleString('es-PY')}`; }
+function hashSimple(str) { let hash = 0; for (let i=0;i<str.length;i++) { const char=str.charCodeAt(i); hash=((hash<<5)-hash)+char; hash|=0; } return Math.abs(hash).toString(16).padStart(8,'0')+Math.abs(hash*7).toString(16).padStart(8,'0')+Math.abs(hash*13).toString(16).padStart(8,'0')+Math.abs(hash*17).toString(16).padStart(8,'0'); }
+const PASSWORD_HASH = hashSimple('Golcentral2026');
+let historialCambios = [];
+function agregarHistorial(accion) { let ahora = new Date(); historialCambios.push({ fecha: ahora.toLocaleDateString('es-AR'), hora: ahora.toLocaleTimeString('es-AR'), accion }); if (historialCambios.length > 500) historialCambios.shift(); localStorage.setItem('golcentral_historial', JSON.stringify(historialCambios)); }
+
+function convertirImagenABase64(file, callback) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > 800) {
+                h = (h * 800) / w;
+                w = 800;
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            callback(canvas.toDataURL('image/jpeg', 0.75));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function abrirWhatsAppReal(numero, mensaje) {
+    if (!numero) {
+        toast("⚠️ Número no configurado.");
+        return;
+    }
+    let numLimpio = numero.replace(/\D/g, '');
+    if (numLimpio.startsWith('0')) {
+        numLimpio = '595' + numLimpio.slice(1);
+    } else if (numLimpio.length === 9 && numLimpio.startsWith('9')) {
+        numLimpio = '595' + numLimpio;
+    }
+    if (numLimpio.length < 10) {
+        toast("⚠️ Número inválido.");
+        return;
+    }
+    const url = `https://wa.me/${numLimpio}?text=${encodeURIComponent(mensaje || 'Hola, vengo de Gol Central.')}`;
+    const nueva = window.open(url, '_blank');
+    setTimeout(() => {
+        if (!nueva || nueva.closed) {
+            window.location.href = url;
+        }
+    }, 400);
+}
+
+function mostrarModal(id) { const modal = document.getElementById(id); modal.style.display = 'flex'; modal.classList.remove('hidden'); }
+function abrirLightbox(url) { 
+    if (!url || url === '') { toast('No hay imagen para mostrar'); return; }
+    document.getElementById('lightboxImg').src = url; 
+    document.getElementById('lightbox').style.display = 'flex'; 
+}
+function cerrarLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
+// ======================== DATOS INICIALES ========================
+const hoyStr = () => new Date().toISOString().split('T')[0];
+const DATOS_INICIALES = {
+  paises: [
+    { id: 'p1', nombre: 'Paraguay', bandera: 'https://flagcdn.com/w320/py.png', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], ciudades: [
+      { id: 'c1', nombre: '9 de Julio', descripcion: 'Ciudad comercial', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], centros: [
+        { id: 'ce1', nombre: 'Town Festival', descripcion: 'El mejor centro', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], publicidad: [
+          { id:'pub1', imagen:'', textoAlt:'🔥 LIQUIDACIÓN 50% OFF', tipo:'texto', activo:true, enlace:'' },
+          { id:'pub2', imagen:'', textoAlt:'🍔 BURGER KING - Nuevo Whopper', tipo:'texto', activo:true, enlace:'' },
+          { id:'pub3', imagen:'', textoAlt:'🎯 Publicitá tu marca aquí', tipo:'texto', activo:true, enlace:'' }
+        ], locales: [] }
+      ] },
+      { id: 'c2', nombre: 'Central', descripcion: 'Zona metropolitana', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], centros: [] },
+      { id: 'c3', nombre: 'San Lorenzo', descripcion: 'Ciudad universitaria', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], centros: [] },
+      { id: 'c4', nombre: 'Capiata', descripcion: 'Ciudad industrial', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], centros: [] },
+      { id: 'c5', nombre: 'Acahay', descripcion: 'Pueblo tranquilo', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], centros: [] }
+    ] },
+    { id: 'p2', nombre: 'Argentina', bandera: 'https://flagcdn.com/w320/ar.png', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], ciudades: [] }
+  ]
+};
+let ciudadAcahay = DATOS_INICIALES.paises[0].ciudades.find(c => c.nombre === 'Acahay');
+ciudadAcahay.centros.push(
+  { id: 'ce_ac1', nombre: 'Centro Comercial Acahay', descripcion: 'Moda y más', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], publicidad: [
+    { id:'pub1', imagen:'', textoAlt:'Espacio publicitario 1', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub2', imagen:'', textoAlt:'Espacio publicitario 2', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub3', imagen:'', textoAlt:'Espacio publicitario 3', tipo:'texto', activo:true, enlace:'' }
+  ], locales: [] },
+  { id: 'ce_ac2', nombre: 'Centro Comercial Carapeguá', descripcion: 'Lo mejor de la zona', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], publicidad: [
+    { id:'pub1', imagen:'', textoAlt:'Espacio publicitario 1', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub2', imagen:'', textoAlt:'Espacio publicitario 2', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub3', imagen:'', textoAlt:'Espacio publicitario 3', tipo:'texto', activo:true, enlace:'' }
+  ], locales: [] },
+  { id: 'ce_ac3', nombre: 'Centro Comercial Paraguari', descripcion: 'Próximamente', foto: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], publicidad: [
+    { id:'pub1', imagen:'', textoAlt:'Espacio publicitario 1', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub2', imagen:'', textoAlt:'Espacio publicitario 2', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub3', imagen:'', textoAlt:'Espacio publicitario 3', tipo:'texto', activo:true, enlace:'' }
+  ], locales: [] }
+);
+let centroTF = DATOS_INICIALES.paises[0].ciudades[0].centros[0];
+centroTF.locales.push(
+  { id: 'pre1', nombre: 'Local Bank', rubro: 'Banco', categoria: 'PREMIUM', estado: 'AL_DIA', llave: '', dueño: '', foto: '', horario: '9 a 18', abierto: true, fechaVencimiento: '2026-12-31', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'pre2', nombre: 'Supermarket', rubro: 'Supermercado', categoria: 'PREMIUM', estado: 'VACANTE', llave: '', dueño: '', foto: '', horario: '8 a 21', abierto: true, fechaVencimiento: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'pre3', nombre: 'McBurguer', rubro: 'Comida rápida', categoria: 'PREMIUM', estado: 'VACANTE', llave: '', dueño: '', foto: '', horario: '10 a 23', abierto: true, fechaVencimiento: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'pre4', nombre: 'KingBurguer', rubro: 'Comida rápida', categoria: 'PREMIUM', estado: 'AL_DIA', llave: '', dueño: '', foto: '', horario: '11 a 22', abierto: true, fechaVencimiento: '2026-06-15', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'pre5', nombre: 'Farmacia Central', rubro: 'Farmacia', categoria: 'PREMIUM', estado: 'DEUDA', llave: '', dueño: '', foto: '', horario: '24h', abierto: true, fechaVencimiento: '2026-05-20', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] }
+);
+centroTF.locales.push(
+  { id: 'est1', nombre: 'Bakery', rubro: 'Panadería', categoria: 'ESTANDAR', estado: 'AL_DIA', llave: '', dueño: '', foto: '', horario: '6 a 20', abierto: true, fechaVencimiento: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'est2', nombre: 'Butcher', rubro: 'Carnicería', categoria: 'ESTANDAR', estado: 'VACANTE', llave: '', dueño: '', foto: '', horario: '8 a 19', abierto: true, fechaVencimiento: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'est3', nombre: 'Tailor', rubro: 'Sastrería', categoria: 'ESTANDAR', estado: 'DEUDA', llave: '', dueño: '', foto: '', horario: '9 a 18', abierto: true, fechaVencimiento: '2026-06-01', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '', whatsappClicks: 0, productos: [] },
+  { id: 'est4', nombre: 'Parrilla', rubro: 'Restaurante', categoria: 'ESTANDAR', estado: 'AL_DIA', llave: '', dueño: '', foto: '', horario: '12 a 24', abierto: true, fechaVencimiento: '', visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono: '+595981234567', whatsappClicks: 0, productos: [
+    { id: 'prod1', nombre: 'Asado Jugoso', descripcion: 'Corte especial', precio: 65000, imagen: '', categoria: 'Parrilla' },
+    { id: 'prod2', nombre: 'Milanesa con Papas', descripcion: 'Napolitana', precio: 80000, imagen: '', categoria: 'Parrilla' }
+  ] }
+);
+let datos = JSON.parse(JSON.stringify(DATOS_INICIALES));
+let usuarioActual = null;
+let navegacion = { paisId: 'p1', ciudadId: 'c1', centroId: 'ce1', localId: null };
+let paginaLocales = 1, filtroLocales = 'TODOS', filtroProductos = 'TODOS';
+let intervalosRotacion = {};
+let rotacionActiva = true;
+let numeroWhatsAppAdmin = localStorage.getItem('whatsapp_admin') || '+5491123726100';
+const ITEMS_POR_PAGINA = 20;
+let vistaActual = 'inicio';
+
+// ======================== CARRITO ========================
+let cart = [];
+function actualizarCarritoUI() {
+    const cartItemsDiv = document.getElementById('cartItemsList');
+    const totalSpan = document.getElementById('cartTotal');
+    const countSpan = document.getElementById('cartCount');
+    if (!cartItemsDiv) return;
+    let total = 0, itemCount = 0;
+    cartItemsDiv.innerHTML = '';
+    cart.forEach(item => {
+        total += item.price * item.cantidad;
+        itemCount += item.cantidad;
+        cartItemsDiv.innerHTML += `
+            <div class="cart-item">
+                <div><span class="text-sm">${item.productName}</span><br><span class="text-oro text-xs">${formatearPrecio(item.price)}</span></div>
+                <div class="cart-item-controls">
+                    <button class="text-red-400 text-xs" onclick="modificarCantidad('${item.productId}', -1)">-</button>
+                    <span>${item.cantidad}</span>
+                    <button class="text-green-400 text-xs" onclick="modificarCantidad('${item.productId}', 1)">+</button>
+                    <button class="text-red-500 ml-2" onclick="eliminarDelCarrito('${item.productId}')"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`;
+    });
+    totalSpan.innerText = formatearPrecio(total);
+    countSpan.innerText = itemCount;
+    document.getElementById('cartIcon').classList.toggle('hidden', itemCount === 0);
+}
+function modificarCantidad(pid, delta) { let idx = cart.findIndex(i => i.productId === pid); if(idx!==-1) { cart[idx].cantidad += delta; if(cart[idx].cantidad<=0) cart.splice(idx,1); actualizarCarritoUI(); guardarCarrito(); } }
+function eliminarDelCarrito(pid) { cart = cart.filter(i=>i.productId!==pid); actualizarCarritoUI(); guardarCarrito(); }
+function agregarAlCarrito(id, nombre, precio, imagen) {
+    let existing = cart.find(i => i.productId === id);
+    if (existing) existing.cantidad++;
+    else cart.push({ productId: id, productName: nombre, price: precio, cantidad: 1 });
+    actualizarCarritoUI();
+    guardarCarrito();
+    toast('✅ Producto agregado');
+}
+function guardarCarrito() { localStorage.setItem('golcentral_cart', JSON.stringify(cart)); }
+function cargarCarrito() { let c = localStorage.getItem('golcentral_cart'); if(c) { cart = JSON.parse(c); actualizarCarritoUI(); } }
+function toggleCart() { document.getElementById('cartSidebar').classList.toggle('open'); }
+function enviarPedidoWhatsApp() {
+    const nombre = document.getElementById('cartNombre').value.trim();
+    const direccion = document.getElementById('cartDireccion').value.trim();
+    const telefonoCliente = document.getElementById('cartTelefono').value.trim();
+    if (cart.length===0) { toast('Carrito vacío'); return; }
+    if (!nombre||!direccion||!telefonoCliente) { toast('Complete nombre, dirección y teléfono'); return; }
+    const local = obtenerLocalActual();
+    if (!local) { toast('Error: no se encontró el local'); return; }
+    local.whatsappClicks = (local.whatsappClicks || 0) + 1;
+    guardarDatos();
+    const telefonoLocal = (local.telefono) ? local.telefono.replace(/[^0-9]/g,'') : numeroWhatsAppAdmin.replace(/[^0-9]/g,'');
+    let mensaje = `🛒 *NUEVO PEDIDO* 🛒\n\n👤 Cliente: ${nombre}\n📍 Dirección: ${direccion}\n📞 Teléfono: ${telefonoCliente}\n\n📦 *Productos:*\n`;
+    let total = 0;
+    cart.forEach(item => { mensaje += `• ${item.productName} x${item.cantidad} = ${formatearPrecio(item.price * item.cantidad)}\n`; total += item.price * item.cantidad; });
+    mensaje += `\n💰 *Total: ${formatearPrecio(total)}*`;
+    window.open(`https://wa.me/${telefonoLocal}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    cart = []; actualizarCarritoUI(); guardarCarrito(); toggleCart(); toast('Pedido enviado');
+}
+
+// ======================== VISITAS Y CLICKS ========================
+function registrarVisita(entidad, tipo) {
+    const hoy = hoyStr();
+    if (!entidad.visitasDiarias) entidad.visitasDiarias = [{ fecha: hoy, count: 0 }];
+    let registro = entidad.visitasDiarias.find(v=>v.fecha===hoy);
+    if (!registro) { entidad.visitasDiarias.push({ fecha: hoy, count: 0 }); registro = entidad.visitasDiarias[entidad.visitasDiarias.length-1]; }
+    registro.count++;
+    entidad.visitasTotales = (entidad.visitasTotales||0)+1;
+    guardarDatos();
+}
+function getVisitasHoy(entidad) { const hoy = hoyStr(); if(!entidad.visitasDiarias) return 0; let reg = entidad.visitasDiarias.find(v=>v.fecha===hoy); return reg ? reg.count : 0; }
+function puedeVerVisitas(entidad, tipo) {
+    if (!usuarioActual) return false;
+    if (usuarioActual.tipo === 'admin') return true;
+    if (tipo === 'local' && usuarioActual.tipo==='local' && entidad.id===usuarioActual.localId) return true;
+    return false;
+}
+function registrarWhatsAppClick(local) {
+    if (!local) return;
+    local.whatsappClicks = (local.whatsappClicks || 0) + 1;
+    guardarDatos();
+    toast('Redirigiendo a WhatsApp...');
+}
+function abrirWhatsAppLocal(local) {
+    if (!local) return;
+    registrarWhatsAppClick(local);
+    const telefono = local.telefono ? local.telefono.replace(/[^0-9]/g,'') : numeroWhatsAppAdmin.replace(/[^0-9]/g,'');
+    const mensaje = `Hola, vengo de Gol Central. Me interesa tu local "${local.nombre}".`;
+    window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank');
+}
+
+function guardarDatos() { localStorage.setItem('golcentral_datos', JSON.stringify(datos)); localStorage.setItem('golcentral_historial', JSON.stringify(historialCambios)); }
+function cargarDatos() { let g = localStorage.getItem('golcentral_datos'); if(g) { datos = JSON.parse(g); return true; } let h = localStorage.getItem('golcentral_historial'); if(h) historialCambios = JSON.parse(h); return false; }
+function restablecerDatos() { if(confirm('¿Restablecer todo?')) { datos = JSON.parse(JSON.stringify(DATOS_INICIALES)); historialCambios = []; guardarDatos(); agregarHistorial('🔄 Datos restablecidos'); toast('✅ Restablecido'); volverAInicio(); } }
+function exportarDatos() { let blob = new Blob([JSON.stringify({ datos, historial: historialCambios }, null, 2)], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'golcentral_backup.json'; a.click(); toast('✅ Exportado'); agregarHistorial('📤 Datos exportados'); }
+function importarDatos(event) { let file = event.target.files[0]; if (!file) return; let reader = new FileReader(); reader.onload = ev => { try { let imp = JSON.parse(ev.target.result); if(imp.datos && imp.datos.paises) { datos = imp.datos; if(imp.historial) historialCambios = imp.historial; guardarDatos(); agregarHistorial('📥 Datos importados'); toast('✅ Importado'); volverAInicio(); } else toast('❌ Archivo inválido'); } catch(e) { toast('❌ Error'); } }; reader.readAsText(file); }
+
+function volverAInicio() {
+    Object.keys(intervalosRotacion).forEach(k => clearInterval(intervalosRotacion[k]));
+    intervalosRotacion = {};
+    rotacionActiva = localStorage.getItem('rotacionActiva') !== 'false';
+    navegacion = { paisId: 'p1', ciudadId: 'c1', centroId: 'ce1', localId: null };
+    paginaLocales = 1; filtroLocales = 'TODOS';
+    renderInicio();
+}
+function obtenerPaisActual() { return datos.paises.find(p => p.id === navegacion.paisId); }
+function obtenerCiudadActual() { let p = obtenerPaisActual(); return p?.ciudades.find(c => c.id === navegacion.ciudadId); }
+function obtenerCentroActual() { let c = obtenerCiudadActual(); return c?.centros.find(ce => ce.id === navegacion.centroId); }
+function obtenerLocalActual() { let ce = obtenerCentroActual(); return ce?.locales.find(l => l.id === navegacion.localId); }
+function actualizarUIUsuario() {
+    const badge = document.getElementById('userBadge');
+    const btnLogout = document.getElementById('btnLogout');
+    const btnLogin = document.getElementById('btnLoginTop');
+    const toolbar = document.getElementById('adminToolbar');
+    if (usuarioActual) {
+        badge.classList.remove('hidden');
+        btnLogout.classList.remove('hidden');
+        btnLogin.classList.add('hidden');
+        if (usuarioActual.tipo === 'admin') { badge.innerHTML = '👑 Admin'; toolbar.classList.remove('hidden'); }
+        else { badge.innerHTML = '🏪 Dueño'; toolbar.classList.add('hidden'); }
+    } else {
+        badge.classList.add('hidden');
+        btnLogout.classList.add('hidden');
+        btnLogin.classList.remove('hidden');
+        toolbar.classList.add('hidden');
+    }
+}
+function cerrarSesion() { usuarioActual = null; volverAInicio(); toast('👋 Sesión cerrada'); agregarHistorial('🚪 Sesión cerrada'); }
+
+// ======================== LOGIN ========================
+function mostrarModalLogin() {
+    document.getElementById('loginTipo').value = 'owner';
+    toggleLoginFields();
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginKey').value = '';
+    document.getElementById('loginError').classList.add('hidden');
+    mostrarModal('modalLogin');
+}
+function toggleLoginFields() {
+    const tipo = document.getElementById('loginTipo').value;
+    document.getElementById('loginPassGroup').classList.toggle('hidden', tipo !== 'admin');
+    document.getElementById('loginKeyGroup').classList.toggle('hidden', tipo !== 'owner');
+}
+function procesarLogin() {
+    const tipo = document.getElementById('loginTipo').value;
+    if (tipo === 'admin') {
+        const pass = document.getElementById('loginPassword').value;
+        if (hashSimple(pass) === PASSWORD_HASH) {
+            usuarioActual = { tipo: 'admin' };
+            cerrarModal('modalLogin');
+            renderAdminPanel();
+            toast('👑 Bienvenido Administrador');
+            agregarHistorial('🔐 Admin inició sesión');
+        } else { document.getElementById('loginError').textContent = '❌ Contraseña incorrecta'; document.getElementById('loginError').classList.remove('hidden'); }
+    } else if (tipo === 'owner') {
+        let llave = document.getElementById('loginKey').value.trim().replace(/\s*\/\s*/g, '/');
+        for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) {
+            if(l.llave === llave && l.estado !== 'BLOQUEADO') {
+                usuarioActual = { tipo: 'local', localId: l.id, centroId: ce.id, ciudadId: c.id, paisId: p.id };
+                navegacion = { paisId: p.id, ciudadId: c.id, centroId: ce.id, localId: l.id };
+                cerrarModal('modalLogin');
+                if(l.estado === 'DEUDA') toast('⚠️ TIENES DEUDA');
+                renderOwnerPanel();
+                agregarHistorial(`🔑 Dueño de local "${l.nombre}" ingresó`);
+                actualizarUIUsuario();
+                return;
+            }
+        }
+        document.getElementById('loginError').textContent = '❌ Llave incorrecta o bloqueado';
+        document.getElementById('loginError').classList.remove('hidden');
+    }
+}
+
+function generarLlaveUnica(centroNombre, documento) {
+    let nombreNorm = centroNombre.toLowerCase().replace(/\s/g,'').replace(/[^a-z0-9]/g,'');
+    let llave = `${documento}/${nombreNorm}`;
+    let cont = 1;
+    while(true) {
+        let existe = false;
+        for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) if(l.llave === llave) { existe = true; break; }
+        if(!existe) break;
+        llave = `${documento}/${nombreNorm}_${cont++}`;
+    }
+    return llave;
+}
+function limpiarLocalCompletamente(local) {
+    local.productos = [];
+    local.foto = '';
+    local.horario = '';
+    delete local.excepcionFecha;
+    delete local.excepcionCerrado;
+    delete local.excepcionHorario;
+    local.abierto = true;
+    local.estado = 'VACANTE';
+    local.dueño = '';
+    local.llave = '';
+    local.fechaVencimiento = '';
+    local.whatsappClicks = 0;
+}
+
+// ======================== RENDER INICIO ========================
+function renderInicio() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+    <div class="text-center mb-8"><h2 class="text-3xl md:text-5xl font-extrabold text-oro mb-2">🌎 Global Golcentral</h2><p class="text-slate-400 text-lg">Centros Comerciales Virtuales · Paraguay & Argentina</p></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        ${datos.paises.map(p => `
+            <div class="glass card-hover rounded-2xl p-6 cursor-pointer border border-transparent hover:border-oro/40 text-center relative" onclick="seleccionarPais('${p.id}')">
+                <div class="img-cover country-img"><img src="${p.bandera}" onerror="this.src='https://placehold.co/400x90?text=Bandera'"></div>
+                <h3 class="text-2xl font-bold text-white mt-2">${p.nombre}</h3>
+                <p class="text-slate-400">${p.ciudades.length} ciudades · ${p.ciudades.reduce((acc,c)=>acc+c.centros.reduce((a,ce)=>a+ce.locales.length,0),0)} locales</p>
+                ${usuarioActual?.tipo === 'admin' ? `<button class="edit-btn" onclick="event.stopPropagation();abrirModalPais('${p.id}')"><i class="fas fa-edit"></i></button><button class="delete-btn" onclick="event.stopPropagation();eliminarPais('${p.id}')"><i class="fas fa-trash"></i></button>` : ''}
+                <div class="mt-3 text-oro text-sm"><i class="fas fa-chevron-right"></i> Explorar</div>
+            </div>
+        `).join('')}
+    </div>
+    <div class="mt-10 max-w-xl mx-auto"><label class="block text-sm text-slate-400 mb-1">🔎 Buscar locales</label><input type="text" id="buscadorGlobal" class="w-full bg-slate-700 border border-slate-600 rounded-xl px-4 py-3 text-white focus:border-oro outline-none"><div id="resultadosBusqueda" class="mt-2"></div></div>`;
+    document.getElementById('buscadorGlobal')?.addEventListener('input', (e) => buscarGlobal(e.target.value));
+    actualizarUIUsuario();
+}
+function buscarGlobal(term) {
+    term = term.toLowerCase().trim();
+    const resDiv = document.getElementById('resultadosBusqueda');
+    if (term.length < 2) { resDiv.innerHTML = ''; return; }
+    let results = [];
+    for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) {
+        let puedeVer = (usuarioActual?.tipo === 'admin') || (usuarioActual?.tipo === 'local' && l.id === usuarioActual.localId) || (l.estado === 'AL_DIA' || l.estado === 'VACANTE');
+        if(!puedeVer) continue;
+        if(l.nombre.toLowerCase().includes(term) || (l.dueño||'').toLowerCase().includes(term) || (l.llave||'').toLowerCase().includes(term) || (l.rubro||'').toLowerCase().includes(term) || ce.nombre.toLowerCase().includes(term) || c.nombre.toLowerCase().includes(term) || p.nombre.toLowerCase().includes(term)) {
+            results.push({ ...l, nombrePais: p.nombre, nombreCiudad: c.nombre, nombreCentro: ce.nombre, paisId: p.id, ciudadId: c.id, centroId: ce.id });
+        }
+    }
+    resDiv.innerHTML = results.slice(0, 15).map(r => `<div class="glass p-2 rounded-lg cursor-pointer hover:bg-slate-700 mt-1" onclick="irAProductoDesdeBusqueda('${r.paisId}','${r.ciudadId}','${r.centroId}','${r.id}')"><p class="font-semibold">${r.nombre}</p><p class="text-xs text-slate-400">${r.nombreCentro} · ${r.nombreCiudad}</p><span class="text-oro text-xs">${r.rubro}</span></div>`).join('');
+}
+function irAProductoDesdeBusqueda(paisId, ciudadId, centroId, localId) {
+    navegacion = { paisId, ciudadId, centroId, localId };
+    renderProductos();
+    document.getElementById('buscadorGlobal').value = '';
+    document.getElementById('resultadosBusqueda').innerHTML = '';
+}
+
+// ======================== PAÍSES, CIUDADES, CENTROS ========================
+function seleccionarPais(id) { let pais = datos.paises.find(p=>p.id===id); if(pais) registrarVisita(pais,'pais'); navegacion = { paisId: id, ciudadId: null, centroId: null, localId: null }; renderPaises(); }
+function renderPaises() {
+    const pais = obtenerPaisActual(); if (!pais) return;
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+    <div class="mb-6 flex justify-between items-center"><button onclick="volverAInicio()" class="text-oro"><i class="fas fa-arrow-left mr-1"></i> Volver</button>${usuarioActual?.tipo === 'admin' ? `<button onclick="abrirModalCiudad()" class="btn-oro px-3 py-1 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Nueva Ciudad</button>` : ''}</div>
+    <h2 class="text-3xl font-bold text-white">${pais.nombre}</h2>
+    <p class="text-slate-400 mb-6">Selecciona una ciudad${puedeVerVisitas(pais,'pais') ? ` - Visitas hoy: ${getVisitasHoy(pais)}` : ''}</p>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        ${pais.ciudades.map(c => `
+            <div class="glass card-hover rounded-xl p-5 cursor-pointer border border-transparent hover:border-oro/40 text-center relative" onclick="seleccionarCiudad('${c.id}')">
+                <div class="img-cover city-img"><img src="${c.foto || 'https://placehold.co/400x100?text=Ciudad'}" onerror="this.src='https://placehold.co/400x100?text=Ciudad'"></div>
+                <h3 class="font-bold text-white mt-2">${c.nombre}</h3>
+                <p class="text-xs text-slate-400">${c.centros.length} centros</p>
+                ${puedeVerVisitas(c,'ciudad') ? `<p class="text-oro text-xs">👁 ${getVisitasHoy(c)} hoy</p>` : ''}
+                ${usuarioActual?.tipo === 'admin' ? `<button class="edit-btn" onclick="event.stopPropagation();abrirModalCiudad('${c.id}')"><i class="fas fa-edit"></i></button><button class="delete-btn" onclick="event.stopPropagation();eliminarCiudad('${c.id}')"><i class="fas fa-trash"></i></button>` : ''}
+            </div>
+        `).join('')}
+    </div>`;
+    actualizarUIUsuario();
+}
+function seleccionarCiudad(id) { let ciudad = obtenerCiudadActual(); if(ciudad) registrarVisita(ciudad,'ciudad'); navegacion.ciudadId = id; navegacion.centroId = null; renderCiudades(); }
+function renderCiudades() {
+    const ciudad = obtenerCiudadActual(); const pais = obtenerPaisActual(); if (!ciudad) return;
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+    <div class="mb-6 flex justify-between items-center"><button onclick="seleccionarPais('${pais.id}')" class="text-oro"><i class="fas fa-arrow-left mr-1"></i> Volver a países</button>${usuarioActual?.tipo === 'admin' ? `<button onclick="abrirModalCentro()" class="btn-oro px-3 py-1 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Nuevo Centro</button>` : ''}</div>
+    <h2 class="text-3xl font-bold text-white">${ciudad.nombre}, ${pais.nombre}</h2>
+    <p class="text-slate-400 mb-6">${ciudad.centros.length} centros comerciales${puedeVerVisitas(ciudad,'ciudad') ? ` - Visitas hoy: ${getVisitasHoy(ciudad)}` : ''}</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        ${ciudad.centros.map(ce => `
+            <div class="glass card-hover rounded-2xl p-5 cursor-pointer border border-transparent hover:border-oro/40 relative" onclick="seleccionarCentro('${ce.id}')">
+                <div class="img-cover mall-img"><img src="${ce.foto || 'https://placehold.co/600x120?text=Centro'}" onerror="this.src='https://placehold.co/600x120?text=Centro'"></div>
+                <h3 class="text-xl font-bold text-white mt-2">${ce.nombre}</h3>
+                <p class="text-sm text-slate-400">${ce.locales.length} locales</p>
+                ${puedeVerVisitas(ce,'centro') ? `<p class="text-oro text-xs">👁 ${getVisitasHoy(ce)} hoy</p>` : ''}
+                ${ce.publicidad && ce.publicidad[0] ? `<p class="text-xs text-oro mt-1">${ce.publicidad[0].textoAlt}</p>` : ''}
+                ${usuarioActual?.tipo === 'admin' ? `<button class="edit-btn" onclick="event.stopPropagation();abrirModalCentro('${ce.id}')"><i class="fas fa-edit"></i></button><button class="delete-btn" onclick="event.stopPropagation();eliminarCentro('${ce.id}')"><i class="fas fa-trash"></i></button>` : ''}
+            </div>
+        `).join('')}
+    </div>`;
+    actualizarUIUsuario();
+}
+function seleccionarCentro(id) { let centro = obtenerCentroActual(); if(centro) registrarVisita(centro,'centro'); navegacion.centroId = id; renderLocales(); }
+
+// ======================== LOCALES ========================
+function renderLocales() {
+    const centro = obtenerCentroActual(); if (!centro) return;
+    const ciudad = obtenerCiudadActual(); const pais = obtenerPaisActual();
+    if (!centro.publicidad || !centro.publicidad.length) centro.publicidad = [
+        { id:'pub1', imagen:'', textoAlt:'Espacio publicitario 1', tipo:'texto', activo:true, enlace:'' },
+        { id:'pub2', imagen:'', textoAlt:'Espacio publicitario 2', tipo:'texto', activo:true, enlace:'' },
+        { id:'pub3', imagen:'', textoAlt:'Espacio publicitario 3', tipo:'texto', activo:true, enlace:'' }
+    ];
+    iniciarRotacionPublicidad();
+    const main = document.getElementById('mainContent');
+    const esAdmin = usuarioActual?.tipo === 'admin';
+    main.innerHTML = `
+    <div class="mb-6 flex justify-between items-center"><button onclick="seleccionarCiudad('${ciudad.id}')" class="text-oro"><i class="fas fa-arrow-left mr-1"></i> Volver</button>${esAdmin ? `<div><button onclick="abrirModalLocal()" class="btn-oro px-3 py-1 rounded-lg text-sm mr-2"><i class="fas fa-plus mr-1"></i> Nuevo Local</button><button onclick="abrirEditarPublicidad()" class="bg-blue-600 px-3 py-1 rounded-lg text-sm"><i class="fas fa-ad"></i> Editar Pub</button></div>` : ''}</div>
+    <h2 class="text-3xl font-bold text-white">${centro.nombre}</h2>
+    <p class="text-slate-400 mb-4">${ciudad.nombre}, ${pais.nombre}${puedeVerVisitas(centro,'centro') ? ` - Visitas hoy: ${getVisitasHoy(centro)}` : ''}</p>
+    <div id="pubContainer" class="pub-container mb-6"></div>
+    <div class="flex flex-wrap gap-3 mb-6"><label class="text-sm">Filtrar:</label><div id="filtros-locales" class="flex flex-wrap gap-2">${['TODOS','PREMIUM','ESTANDAR',...(esAdmin?['AL_DIA','DEUDA','VACANTE','VENCIDOS']:[])].map(f=>`<button class="filtro-btn ${filtroLocales===f?'activo':''}" onclick="cambiarFiltroLocales('${f}')">${f}</button>`).join('')}</div></div>
+    <div id="lista-locales"></div><div id="paginacion-locales" class="flex justify-center gap-2 mt-6"></div>`;
+    renderizarListaLocales();
+    actualizarUIUsuario();
+}
+function renderizarListaLocales() {
+    const centro = obtenerCentroActual(); if (!centro) return;
+    let locales = [...centro.locales];
+    if (!usuarioActual) locales = locales.filter(l => l.estado === 'AL_DIA' || l.estado === 'VACANTE');
+    if (filtroLocales === 'PREMIUM') locales = locales.filter(l => l.categoria === 'PREMIUM');
+    if (filtroLocales === 'ESTANDAR') locales = locales.filter(l => l.categoria === 'ESTANDAR');
+    if (filtroLocales === 'AL_DIA') locales = locales.filter(l => l.estado === 'AL_DIA');
+    if (filtroLocales === 'DEUDA') locales = locales.filter(l => l.estado === 'DEUDA');
+    if (filtroLocales === 'VACANTE') locales = locales.filter(l => l.estado === 'VACANTE');
+    if (filtroLocales === 'VENCIDOS') { let hoy = new Date(); hoy.setHours(0,0,0,0); locales = locales.filter(l => l.fechaVencimiento && new Date(l.fechaVencimiento+'T00:00:00') <= hoy); }
+    const inicio = (paginaLocales-1)*ITEMS_POR_PAGINA;
+    const pagina = locales.slice(inicio, inicio+ITEMS_POR_PAGINA);
+    const premium = pagina.filter(l => l.categoria === 'PREMIUM');
+    const estandar = pagina.filter(l => l.categoria === 'ESTANDAR');
+    let html = '';
+    if (premium.length) html += `<h3 class="text-oro text-xl font-bold mt-4 mb-3">✨ LOCALES PREMIUM</h3><div class="grid-premium">${premium.map(l => tarjetaLocalHtml(l, true)).join('')}</div>`;
+    if (estandar.length) html += `<h3 class="text-slate-400 text-lg font-bold mt-6 mb-3">🏪 LOCALES ESTÁNDAR</h3><div class="grid-estandar">${estandar.map(l => tarjetaLocalHtml(l, false)).join('')}</div>`;
+    if (!premium.length && !estandar.length) html = '<p class="text-center py-8">No hay locales con este filtro</p>';
+    document.getElementById('lista-locales').innerHTML = html;
+    const totalPag = Math.ceil(locales.length/ITEMS_POR_PAGINA);
+    let pagHtml = '';
+    if (totalPag>1) {
+        pagHtml += `<button class="paginacion-btn" onclick="cambiarPaginaLocales(${paginaLocales-1})" ${paginaLocales===1?'disabled':''}>←</button>`;
+        for(let i=1;i<=totalPag;i++) if(i===1||i===totalPag||Math.abs(i-paginaLocales)<=2) pagHtml += `<button class="paginacion-btn ${paginaLocales===i?'activo':''}" onclick="cambiarPaginaLocales(${i})">${i}</button>`;
+        pagHtml += `<button class="paginacion-btn" onclick="cambiarPaginaLocales(${paginaLocales+1})" ${paginaLocales===totalPag?'disabled':''}>→</button>`;
+    }
+    document.getElementById('paginacion-locales').innerHTML = pagHtml;
+}
+function tarjetaLocalHtml(l, isPremium) {
+    const esAdmin = usuarioActual?.tipo === 'admin';
+    const esPropietario = (usuarioActual?.tipo === 'local' && usuarioActual.localId === l.id);
+    const puedeVerContador = esAdmin || esPropietario;
+    let estadoBadge = '';
+    if (esAdmin) {
+        if (l.estado === 'AL_DIA') estadoBadge = '<span class="estado-al-dia">✅ Al día</span>';
+        else if (l.estado === 'DEUDA') estadoBadge = '<span class="estado-deuda">⚠️ Deuda</span>';
+        else if (l.estado === 'VACANTE') estadoBadge = '<span class="estado-vacante">⚪ Vacante</span>';
+        else if (l.estado === 'BLOQUEADO') estadoBadge = '<span class="estado-bloqueado">🔴 Bloqueado</span>';
+    }
+    const btnAlquiler = (!usuarioActual && (l.estado === 'VACANTE' || l.estado === 'DEUDA')) ? `<button class="bg-green-600 w-full mt-2 py-1 rounded-lg text-sm font-bold" onclick="event.stopPropagation();mostrarModalAlquiler('${l.id}')">📩 QUIERO ALQUILAR</button>` : '';
+    const cardClass = isPremium ? 'card-premium' : 'card-estandar';
+    return `<div class="${cardClass} relative" onclick="${l.estado==='BLOQUEADO'?'':`seleccionarLocal('${l.id}')`}">
+        <div class="img-cover store-img"><img src="${l.foto || 'https://placehold.co/400x140?text=Local'}" onerror="this.src='https://placehold.co/400x140?text=Local'"></div>
+        <div class="absolute top-2 right-2 flex gap-1">${esAdmin ? `<button class="bg-blue-600 text-white text-xs px-2 py-1 rounded" onclick="event.stopPropagation();abrirModalLocal('${l.id}')"><i class="fas fa-edit"></i></button><button class="bg-red-600 text-white text-xs px-2 py-1 rounded" onclick="event.stopPropagation();eliminarLocal('${l.id}')"><i class="fas fa-trash"></i></button>` : ''}</div>
+        <h4 class="font-bold mt-2 text-center text-sm">${l.nombre}</h4>
+        <p class="text-slate-400 text-center text-xs">${l.rubro}</p>
+        <div class="flex justify-center gap-2 mt-1 flex-wrap">${estadoBadge}</div>
+        ${puedeVerContador ? `<p class="text-oro text-xs text-center mt-1">👁 ${getVisitasHoy(l)} hoy</p>` : ''}
+        ${puedeVerContador ? `<p class="text-blue-400 text-xs text-center">📱 WhatsApp clicks: ${l.whatsappClicks || 0}</p>` : ''}
+        ${btnAlquiler}
+    </div>`;
+}
+function seleccionarLocal(id) { let local = obtenerCentroActual().locales.find(l => l.id === id); if(local) registrarVisita(local, 'local'); if(local.estado === 'BLOQUEADO') { toast('🔒 Local bloqueado'); return; } navegacion.localId = id; renderProductos(); }
+function cambiarFiltroLocales(f) { filtroLocales = f; paginaLocales = 1; renderizarListaLocales(); }
+function cambiarPaginaLocales(p) { paginaLocales = p; renderizarListaLocales(); }
+
+// ======================== PUBLICIDAD ROTATIVA (con lightbox y alquiler) ========================
+function iniciarRotacionPublicidad() {
+    let centro = obtenerCentroActual(); if (!centro) return;
+    if (intervalosRotacion[centro.id]) clearInterval(intervalosRotacion[centro.id]);
+    let idx = 0;
+    function mostrar() {
+        let pub = centro.publicidad[idx % centro.publicidad.length];
+        let container = document.getElementById('pubContainer');
+        if (!container) return;
+        // Detectar si el espacio está libre (sin imagen y texto genérico)
+        let libre = !pub.imagen && (pub.textoAlt.includes('Espacio publicitario') || pub.textoAlt.includes('Publicitá'));
+        let html = '';
+        if (pub.tipo === 'imagen' && pub.imagen) {
+            html = `<img src="${pub.imagen}" style="width:100%; height:100%; object-fit:cover; cursor:pointer;" onclick="abrirLightbox('${pub.imagen}')">`;
+        } else {
+            html = `<div class="pub-text" style="cursor:pointer;" onclick="abrirLightbox('${pub.imagen || ''}')"><i class="fas fa-bullhorn text-4xl text-oro mb-2"></i><p class="text-oro font-bold">${pub.textoAlt}</p></div>`;
+        }
+        // Si está libre, agregar botón de alquiler
+        if (libre) {
+            html += `<div class="absolute bottom-2 left-0 right-0 text-center"><button class="bg-green-600 text-white px-4 py-1 rounded-full text-sm font-bold" onclick="event.stopPropagation();alquilarEspacioPublicitario('${centro.id}', ${idx % centro.publicidad.length})"><i class="fas fa-handshake"></i> Alquilar este espacio</button></div>`;
+        }
+        container.innerHTML = `<div style="position:relative; width:100%; height:100%;">${html}</div>`;
+    }
+    mostrar();
+    if (rotacionActiva) intervalosRotacion[centro.id] = setInterval(() => { idx = (idx+1) % centro.publicidad.length; mostrar(); }, 5000);
+}
+function alquilarEspacioPublicitario(centroId, pubIndex) {
+    const centro = datos.paises.flatMap(p=>p.ciudades).flatMap(c=>c.centros).find(ce=>ce.id===centroId);
+    if (!centro) return;
+    const pub = centro.publicidad[pubIndex];
+    if (!pub) return;
+    let libre = !pub.imagen && (pub.textoAlt.includes('Espacio publicitario') || pub.textoAlt.includes('Publicitá'));
+    if (!libre) { toast('Este espacio ya está ocupado'); return; }
+    const mensaje = `Hola, quiero alquilar el espacio publicitario "${pub.textoAlt}" en el centro ${centro.nombre}.`;
+    const telefono = numeroWhatsAppAdmin.replace(/[^0-9]/g,'');
+    if (confirm(`¿Deseas alquilar este espacio publicitario por ${formatearPrecio(50000)} mensuales? Se abrirá WhatsApp para coordinar.`)) {
+        window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    }
+}
+function abrirEnlacePublicidad(enlace) {
+    if (!enlace) return;
+    if (enlace.match(/^https?:\/\//i) || enlace.match(/^wa\.me/i) || enlace.match(/^\+?\d+/)) {
+        let url = enlace;
+        if (enlace.match(/^\+?\d+$/)) url = `https://wa.me/${enlace.replace(/[^0-9]/g,'')}`;
+        window.open(url, '_blank');
+    } else {
+        toast('Enlace no válido');
+    }
+}
+function cambiarPublicidadManual(idx) {
+    let centro = obtenerCentroActual(); if(!centro) return;
+    if(intervalosRotacion[centro.id]) clearInterval(intervalosRotacion[centro.id]);
+    rotacionActiva = false; localStorage.setItem('rotacionActiva','false');
+    let pub = centro.publicidad[idx];
+    let container = document.getElementById('pubContainer');
+    if (container) {
+        if (pub.tipo === 'imagen' && pub.imagen) container.innerHTML = `<a href="#" onclick="abrirEnlacePublicidad('${pub.enlace}'); return false;"><img src="${pub.imagen}" style="width:100%; height:100%; object-fit:cover;"></a>`;
+        else container.innerHTML = `<div class="pub-text"><i class="fas fa-bullhorn text-4xl text-oro mb-2"></i><p class="text-oro font-bold">${pub.textoAlt}</p></div>`;
+    }
+}
+function abrirEditarPublicidad() {
+    let centro = obtenerCentroActual(); if (!centro) return;
+    let modal = document.getElementById('modalCRUDContent');
+    let html = `<h3 class="text-oro text-xl font-bold mb-4">📢 Editar Publicidad de ${centro.nombre}</h3>`;
+    centro.publicidad.forEach((pub,i) => {
+        html += `<div class="mb-4"><label>Espacio ${i+1}</label>
+        <select id="pub-tipo-${i}" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 mb-2" onchange="cambiarTipoPub(${i})">
+            <option value="texto" ${pub.tipo==='texto'?'selected':''}>Texto</option>
+            <option value="imagen" ${pub.tipo==='imagen'?'selected':''}>Imagen</option>
+        </select>
+        <div id="pub-texto-${i}" class="${pub.tipo!=='texto'?'hidden':''}"><input type="text" id="pub-texto-alt-${i}" class="w-full bg-slate-700 rounded-lg p-2" value="${(pub.textoAlt||'').replace(/"/g,'&quot;')}"></div>
+        <div id="pub-imagen-${i}" class="${pub.tipo!=='imagen'?'hidden':''}"><input type="text" id="pub-imagen-url-${i}" class="w-full bg-slate-700 rounded-lg p-2" value="${pub.imagen||''}"><input type="file" id="pub-imagen-file-${i}" accept="image/*" class="w-full bg-slate-700 p-1 mt-1" onchange="subirImagenPublicidad(${i})"></div>
+        <input type="text" id="pub-enlace-${i}" class="w-full bg-slate-700 rounded-lg p-2 mt-2" placeholder="Enlace" value="${pub.enlace||''}"></div>`;
+    });
+    html += `<div class="flex gap-2 mt-4"><button class="btn-oro flex-1 py-2 rounded-xl" onclick="guardarPublicidad()">💾 GUARDAR</button><button class="bg-slate-600 flex-1 py-2 rounded-xl" onclick="cerrarModal('modalCRUD')">Cancelar</button></div>`;
+    modal.innerHTML = html;
+    mostrarModal('modalCRUD');
+}
+function cambiarTipoPub(i) { let tipo = document.getElementById(`pub-tipo-${i}`).value; document.getElementById(`pub-texto-${i}`).classList.toggle('hidden', tipo !== 'texto'); document.getElementById(`pub-imagen-${i}`).classList.toggle('hidden', tipo !== 'imagen'); }
+function subirImagenPublicidad(i) { let file = document.getElementById(`pub-imagen-file-${i}`).files[0]; if(file) convertirImagenABase64(file, (base64) => { document.getElementById(`pub-imagen-url-${i}`).value = base64; toast('Imagen cargada'); }); }
+function guardarPublicidad() {
+    let centro = obtenerCentroActual();
+    centro.publicidad.forEach((pub,i) => {
+        pub.tipo = document.getElementById(`pub-tipo-${i}`).value;
+        if(pub.tipo === 'texto') pub.textoAlt = document.getElementById(`pub-texto-alt-${i}`).value;
+        else pub.imagen = document.getElementById(`pub-imagen-url-${i}`).value;
+        pub.enlace = document.getElementById(`pub-enlace-${i}`).value;
+    });
+    guardarDatos();
+    agregarHistorial(`📢 Publicidad actualizada en ${centro.nombre}`);
+    toast('✅ Publicidad actualizada');
+    cerrarModal('modalCRUD');
+    iniciarRotacionPublicidad();
+}
+
+// ======================== GESTIÓN UNIFICADA DE PUBLICIDADES ========================
+function mostrarGestionPublicidades() {
+    let html = `<h3 class="text-oro text-xl font-bold mb-4">📢 Gestión de Publicidades (todos los centros)</h3><div class="max-h-96 overflow-auto">`;
+    for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) {
+        html += `<div class="border-b border-slate-700 py-3"><b>Centro:</b> ${ce.nombre} (${c.nombre}, ${p.nombre})<br>`;
+        ce.publicidad.forEach((pub, i) => {
+            html += `<div class="ml-4 mt-2 text-sm"><span class="text-oro">Espacio ${i+1}:</span> ${pub.tipo==='imagen'?`<img src="${pub.imagen}" style="max-width:80px; max-height:40px;" class="inline">`:`${pub.textoAlt}`} - Enlace: ${pub.enlace || 'ninguno'}<br>
+            <button class="btn-oro text-xs px-2 py-1 rounded mt-1" onclick="abrirEditarPublicidadCentro('${ce.id}')">Editar</button></div>`;
+        });
+        html += `</div>`;
+    }
+    html += `</div><button class="btn-oro w-full mt-4 py-2 rounded-xl" onclick="cerrarModal('modalCRUD')">Cerrar</button>`;
+    document.getElementById('modalCRUDContent').innerHTML = html;
+    mostrarModal('modalCRUD');
+}
+function abrirEditarPublicidadCentro(centroId) {
+    const originalCentroId = navegacion.centroId;
+    navegacion.centroId = centroId;
+    abrirEditarPublicidad();
+    navegacion.centroId = originalCentroId;
+}
+
+// ======================== ALQUILER CON MODAL ========================
+function mostrarModalAlquiler(localId) {
+    const centro = obtenerCentroActual();
+    const local = centro.locales.find(l => l.id === localId);
+    const precio = local.categoria === 'PREMIUM' ? 50000 : 25000;
+    const telefonoDestino = (local && local.telefono) ? local.telefono.replace(/[^0-9]/g,'') : numeroWhatsAppAdmin.replace(/[^0-9]/g,'');
+    const mensaje = `Hola, quiero alquilar: ${centro.nombre} - ${local.nombre} | ${local.categoria} | ${formatearPrecio(precio)}`;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-store text-5xl text-oro mb-3"></i>
+            <h3 class="text-xl font-bold text-white mb-2">📋 Confirmación de alquiler</h3>
+            <p class="text-slate-300 text-sm mb-4">Al continuar, tu solicitud será enviada directamente al WhatsApp del local para coordinar el alquiler del salón.</p>
+            <ul class="text-left text-xs text-slate-400 space-y-1 mb-4">
+                <li>✅ El alquiler es mensual y se abona por adelantado.</li>
+                <li>✅ La disponibilidad y condiciones finales las confirma el local.</li>
+                <li>✅ Al presionar "Aceptar", se abrirá WhatsApp para continuar la gestión.</li>
+            </ul>
+            <div class="flex gap-3 mt-4">
+                <button onclick="window.open('https://wa.me/${telefonoDestino}?text=${encodeURIComponent(mensaje)}', '_blank'); registrarWhatsAppClick(local); cerrarModal('modalCRUD');" class="btn-oro flex-1 py-2 rounded-xl">Aceptar</button>
+                <button onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button>
+            </div>
+        </div>`;
+    mostrarModal('modalCRUD');
+}
+
+// ======================== PRODUCTOS (estilo catálogo) ========================
+function renderProductos() {
+    const local = obtenerLocalActual(); if (!local) return;
+    const centro = obtenerCentroActual();
+    const esAdmin = usuarioActual?.tipo === 'admin';
+    const esPropietario = usuarioActual?.tipo === 'local' && usuarioActual.localId === local.id;
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+    <div class="mb-6 flex justify-between flex-wrap gap-2"><button onclick="seleccionarCentro('${centro.id}')" class="text-oro"><i class="fas fa-arrow-left mr-1"></i> Volver</button>${(esAdmin||esPropietario)?`<button onclick="abrirModalProducto()" class="btn-oro px-3 py-1 rounded-lg text-sm"><i class="fas fa-plus mr-1"></i> Agregar Producto</button>`:''}</div>
+    <h2 class="text-2xl font-bold text-white">${local.nombre}</h2>
+    <p class="text-slate-400 text-sm">${local.rubro} · ${local.categoria}</p>
+    <div id="info-local" class="glass rounded-xl p-3 my-3"></div>
+    <div id="info-extra" class="mb-3"></div>
+    <div id="categorias-productos" class="flex flex-wrap gap-2 mb-4"></div>
+    <div id="lista-productos" class="grid-productos"></div>
+    <div id="compartir-local" class="mt-6 text-center"></div>
+    <div id="editar-local-propio" class="mt-4 text-center"></div>`;
+    let abierto = local.abierto !== undefined ? local.abierto : true;
+    let horario = local.horario || '';
+    let hoy = new Date().toISOString().split('T')[0];
+    if (local.excepcionFecha === hoy) { if (local.excepcionCerrado) { abierto = false; horario = 'Hoy cerrado'; } else if (local.excepcionHorario) { horario = local.excepcionHorario; abierto = true; } }
+    const puedeVerContador = esAdmin || esPropietario;
+    document.getElementById('info-local').innerHTML = `<span class="${abierto?'abierto':'cerrado'}">${abierto?'🟢 ABIERTO AHORA':'🔴 CERRADO AHORA'}</span><p class="text-sm">Horario: ${horario}</p>${puedeVerContador ? `<p class="text-xs">👁 ${getVisitasHoy(local)} visitas hoy | Total: ${local.visitasTotales}</p><p class="text-xs">📱 WhatsApp clicks: ${local.whatsappClicks || 0}</p>` : ''}`;
+    if (esPropietario || esAdmin) {
+        document.getElementById('info-extra').innerHTML = `<div class="bg-slate-800 p-3 rounded-xl"><i class="fas fa-key text-oro"></i> Llave: <code>${local.llave || 'No generada'}</code> <button class="ml-2 bg-slate-600 px-2 py-1 rounded text-xs" onclick="navigator.clipboard.writeText('${local.llave}'); toast('Copiada')">Copiar</button><br><i class="fas fa-calendar"></i> Vencimiento: ${local.fechaVencimiento || 'Sin definir'}</div>`;
+    }
+    let url = `${window.location.origin}${window.location.pathname}?local=${local.id}`;
+    document.getElementById('compartir-local').innerHTML = `<div class="glass p-3 rounded-xl"><p>📢 Compartir:</p><input type="text" readonly value="${url}" class="w-full bg-black rounded px-2 py-1 text-sm mb-2"><button class="bg-blue-600 px-3 py-1 rounded text-sm" onclick="navigator.clipboard.writeText('${url}'); toast('Enlace copiado')">Copiar enlace</button></div>`;
+    if (esPropietario && local.estado !== 'DEUDA') document.getElementById('editar-local-propio').innerHTML = `<button class="bg-blue-600 w-full py-2 rounded-lg font-bold" onclick="abrirModalLocalPropio()">✏️ Editar mi local</button>`;
+    let productos = [...local.productos];
+    if (filtroProductos !== 'TODOS') productos = productos.filter(p => p.categoria === filtroProductos);
+    let cats = [...new Set(local.productos.map(p => p.categoria || 'General'))];
+    document.getElementById('categorias-productos').innerHTML = `<button class="filtro-btn ${filtroProductos==='TODOS'?'activo':''}" onclick="cambiarFiltroProductos('TODOS')">Todos</button>` + cats.map(c => `<button class="filtro-btn ${filtroProductos===c?'activo':''}" onclick="cambiarFiltroProductos('${c}')">${c}</button>`).join('');
+    // Renderizado estilo catálogo
+    document.getElementById('lista-productos').innerHTML = productos.map(p => `
+        <div class="product-card">
+            <div class="product-img" onclick="abrirLightbox('${p.imagen || 'https://placehold.co/400x140?text=Producto'}')">
+                <img src="${p.imagen || 'https://placehold.co/400x140?text=Producto'}" onerror="this.src='https://placehold.co/400x140?text=Producto'">
+            </div>
+            <div class="product-nombre">${p.nombre}</div>
+            <div class="product-categoria">${p.categoria || 'General'}</div>
+            <div class="product-precio">${formatearPrecio(p.precio)}</div>
+            <button class="btn-add-cart" onclick="agregarAlCarrito('${p.id}','${p.nombre.replace(/'/g, "\\'")}',${p.precio},'${p.imagen||''}')"><i class="fas fa-cart-plus"></i> Agregar al carrito</button>
+            ${(esAdmin || esPropietario) ? `<div class="flex gap-1 mt-1"><button class="bg-blue-600 text-white text-xs px-2 py-1 rounded flex-1" onclick="event.stopPropagation();abrirModalProducto('${p.id}')"><i class="fas fa-edit"></i> Editar</button><button class="bg-red-600 text-white text-xs px-2 py-1 rounded flex-1" onclick="event.stopPropagation();eliminarProducto('${p.id}')"><i class="fas fa-trash"></i> Eliminar</button></div>` : ''}
+        </div>
+    `).join('');
+    if (!productos.length) document.getElementById('lista-productos').innerHTML = '<p class="text-center py-8 col-span-full">No hay productos</p>';
+}
+function cambiarFiltroProductos(cat) { filtroProductos = cat; renderProductos(); }
+
+// ======================== ADMIN PANEL ========================
+function renderAdminPanel() {
+    vistaActual = 'adminPanel';
+    const main = document.getElementById('mainContent');
+    let totalLocales = 0, premium = 0, alDia = 0, vacante = 0, totalWhatsClicks = 0;
+    let localesList = [];
+    for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) {
+        totalLocales++;
+        if (l.categoria === 'PREMIUM') premium++;
+        if (l.estado === 'AL_DIA') alDia++;
+        if (l.estado === 'VACANTE') vacante++;
+        totalWhatsClicks += (l.whatsappClicks || 0);
+        localesList.push({ nombre: l.nombre, visitasHoy: getVisitasHoy(l), whatsClicks: l.whatsappClicks || 0 });
+    }
+    localesList.sort((a,b) => b.visitasHoy - a.visitasHoy);
+    const top5Visitas = localesList.slice(0,5);
+    const top5Whats = [...localesList].sort((a,b)=>b.whatsClicks - a.whatsClicks).slice(0,5);
+    main.innerHTML = `
+    <div class="mb-6"><button onclick="volverAInicio()" class="text-oro"><i class="fas fa-arrow-left mr-1"></i> Inicio</button><h2 class="text-3xl font-bold text-oro mt-2">👑 Panel de Administración</h2></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="glass p-4 text-center"><p class="text-3xl font-bold text-oro">${totalLocales}</p><p class="text-xs">Locales totales</p></div>
+        <div class="glass p-4 text-center"><p class="text-3xl font-bold text-oro">${premium}</p><p class="text-xs">Premium</p></div>
+        <div class="glass p-4 text-center"><p class="text-3xl font-bold text-green-400">${alDia}</p><p class="text-xs">Al día</p></div>
+        <div class="glass p-4 text-center"><p class="text-3xl font-bold text-yellow-400">${vacante}</p><p class="text-xs">Vacantes</p></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="glass p-4"><h3 class="text-lg font-bold text-white mb-2">📊 Top 5 locales más visitados HOY</h3><canvas id="graficoVisitas" width="400" height="200"></canvas></div>
+        <div class="glass p-4"><h3 class="text-lg font-bold text-white mb-2">📱 Clics a WhatsApp por local (top 5)</h3><canvas id="graficoWhatsClicks" width="400" height="200"></canvas></div>
+    </div>
+    <div class="glass p-4"><h3 class="text-lg font-bold mb-3">📋 Todos los locales</h3><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-oro"><th>Local</th><th>Categoría</th><th>Estado</th><th>Visitas hoy</th><th>Clics WhatsApp</th><th>Acciones</th></tr></thead><tbody id="tabla-locales-admin"></tbody></table></div></div>`;
+    let rows = '';
+    for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) {
+        rows += `<tr><td class="py-1">${l.nombre}</td><td>${l.categoria}</td><td>${l.estado}</td><td>${getVisitasHoy(l)}</td><td>${l.whatsappClicks || 0}</td><td><button onclick="abrirModalLocal('${l.id}')" class="text-oro"><i class="fas fa-edit"></i></button> <button onclick="eliminarLocalGlobal('${p.id}','${c.id}','${ce.id}','${l.id}')" class="text-red-400"><i class="fas fa-trash"></i></button></td></tr>`;
+    }
+    document.getElementById('tabla-locales-admin').innerHTML = rows;
+    setTimeout(() => {
+        const ctxVisitas = document.getElementById('graficoVisitas')?.getContext('2d');
+        if(ctxVisitas) new Chart(ctxVisitas, { type: 'bar', data: { labels: top5Visitas.map(l=>l.nombre), datasets: [{ label: 'Visitas hoy', data: top5Visitas.map(l=>l.visitasHoy), backgroundColor: '#f9b800' }] }, options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+        const ctxClicks = document.getElementById('graficoWhatsClicks')?.getContext('2d');
+        if(ctxClicks) new Chart(ctxClicks, { type: 'bar', data: { labels: top5Whats.map(l=>l.nombre), datasets: [{ label: 'Clics a WhatsApp', data: top5Whats.map(l=>l.whatsClicks), backgroundColor: '#25D366' }] }, options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+    }, 100);
+    actualizarUIUsuario();
+}
+function eliminarLocalGlobal(paisId, ciudadId, centroId, localId) {
+    if(confirm('¿Eliminar local?')) { let p = datos.paises.find(p => p.id === paisId); let c = p.ciudades.find(c => c.id === ciudadId); let ce = c.centros.find(ce => ce.id === centroId); ce.locales = ce.locales.filter(l => l.id !== localId); guardarDatos(); agregarHistorial('Local eliminado'); renderAdminPanel(); toast('Local eliminado'); }
+}
+
+// ======================== GESTIÓN DE LLAVES ========================
+function mostrarGestionLlaves() {
+    let html = `<h3 class="text-oro text-xl font-bold mb-4">🔑 Gestión de Llaves</h3><div class="max-h-96 overflow-auto">`;
+    for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) {
+        html += `<div class="border-b border-slate-700 py-2"><b>${l.nombre}</b> - ${l.estado}<br>Llave: <code>${l.llave || 'Sin llave'}</code> - Dueño: ${l.dueño || 'Ninguno'}<br>
+        <div class="flex gap-2 mt-1"><button class="btn-oro text-xs px-2 py-1 rounded" onclick="abrirModalCambiarLlave('${p.id}','${c.id}','${ce.id}','${l.id}')">Cambiar llave</button>
+        <button class="bg-blue-600 text-white text-xs px-2 py-1 rounded" onclick="abrirModalLocal('${l.id}')">✏️ Editar local</button></div></div>`;
+    }
+    html += `</div><button class="btn-oro w-full mt-4 py-2 rounded-xl" onclick="cerrarModal('modalCRUD')">Cerrar</button>`;
+    document.getElementById('modalCRUDContent').innerHTML = html;
+    mostrarModal('modalCRUD');
+}
+function abrirModalCambiarLlave(paisId, ciudadId, centroId, localId) {
+    let l = null; for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let loc of ce.locales) if(loc.id === localId) l = loc;
+    if (!l) return;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">Cambiar llave de ${l.nombre}</h3><input type="text" id="nuevoDocumento" placeholder="Documento (ej: 12345678)" class="w-full bg-slate-700 rounded-lg p-2 mb-2"><input type="text" id="nuevoDueño" placeholder="Nombre del dueño" class="w-full bg-slate-700 rounded-lg p-2 mb-2" value="${l.dueño||''}"><div class="flex gap-2"><button onclick="cambiarLlaveLocal('${paisId}','${ciudadId}','${centroId}','${localId}')" class="btn-oro flex-1 py-2 rounded-xl">Generar nueva llave</button><button onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>`;
+    mostrarModal('modalCRUD');
+}
+function cambiarLlaveLocal(paisId, ciudadId, centroId, localId) {
+    let p = datos.paises.find(p => p.id === paisId);
+    let c = p.ciudades.find(c => c.id === ciudadId);
+    let ce = c.centros.find(ce => ce.id === centroId);
+    let l = ce.locales.find(l => l.id === localId);
+    if (!l) return;
+    let doc = document.getElementById('nuevoDocumento').value.trim();
+    let dueño = document.getElementById('nuevoDueño').value.trim();
+    if (!doc) { toast('Documento requerido'); return; }
+    let nuevaLlave = generarLlaveUnica(ce.nombre, doc);
+    l.llave = nuevaLlave;
+    l.dueño = dueño;
+    l.estado = 'AL_DIA';
+    guardarDatos();
+    agregarHistorial(`Llave regenerada para ${l.nombre}`);
+    toast(`Nueva llave: ${nuevaLlave}`);
+    cerrarModal('modalCRUD');
+    if (vistaActual === 'adminPanel') renderAdminPanel();
+    else mostrarGestionLlaves();
+}
+function verHistorial() {
+    let hist = historialCambios.slice().reverse().slice(0,50).map(h => `<div class="text-xs border-b border-slate-700 py-1">${h.fecha} ${h.hora} - ${h.accion}</div>`).join('');
+    document.getElementById('modalCRUDContent').innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">Historial</h3><div class="max-h-96 overflow-auto">${hist || 'Sin registros'}</div><button class="btn-oro w-full mt-4 py-2 rounded-xl" onclick="cerrarModal('modalCRUD')">Cerrar</button>`;
+    mostrarModal('modalCRUD');
+}
+function configurarWhatsApp() {
+    let nuevo = prompt('Número WhatsApp (código país):', numeroWhatsAppAdmin);
+    if (nuevo) { numeroWhatsAppAdmin = nuevo; localStorage.setItem('whatsapp_admin', nuevo); toast('✅ Actualizado'); }
+}
+function generarInformeMASA() {
+    let totalCentros=0, totalLocales=0, alDia=0, deuda=0, premium=0, estandar=0, ingresos=0;
+    for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) {
+        totalCentros++;
+        for(let l of ce.locales) {
+            totalLocales++;
+            if(l.estado === 'AL_DIA') { alDia++; ingresos += l.categoria==='PREMIUM'?50000:25000; }
+            if(l.estado === 'DEUDA') deuda++;
+            if(l.categoria === 'PREMIUM') premium++;
+            else estandar++;
+        }
+    }
+    let informe = { fecha: new Date().toISOString(), resumen: { totalCentros, totalLocales, alDia, deuda, premium, estandar, ingresos } };
+    document.getElementById('modalCRUDContent').innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">Informe MASA</h3><pre class="bg-black p-4 rounded-xl text-xs">${JSON.stringify(informe, null, 2)}</pre><div class="flex gap-2 mt-4"><button class="btn-oro flex-1 py-2 rounded-xl" onclick="navigator.clipboard.writeText(document.querySelector('#modalCRUDContent pre').innerText); toast('Copiado');">Copiar</button><button class="bg-slate-600 flex-1 py-2 rounded-xl" onclick="cerrarModal('modalCRUD')">Cerrar</button></div>`;
+    mostrarModal('modalCRUD');
+}
+
+// ======================== OWNER PANEL ========================
+function renderOwnerPanel() {
+    vistaActual = 'ownerPanel';
+    const local = obtenerLocalActual();
+    if (!local || usuarioActual?.tipo !== 'local') { volverAInicio(); return; }
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+    <div class="mb-6"><button onclick="volverAInicio()" class="text-oro"><i class="fas fa-arrow-left mr-1"></i> Inicio</button><h2 class="text-3xl font-bold text-white">🏪 Mi Local: ${local.nombre}</h2><p class="text-slate-400">Llave: <code class="text-oro">${local.llave}</code> <button onclick="navigator.clipboard.writeText('${local.llave}'); toast('Copiada')" class="text-xs text-blue-400"><i class="far fa-copy"></i></button></p></div>
+    <div class="glass p-5 mb-4"><h3 class="text-lg font-bold text-oro">📊 Mis estadísticas</h3><p class="text-3xl font-bold">👁 ${local.visitasTotales || 0} <span class="text-sm">visitas totales</span></p><p>Hoy: ${getVisitasHoy(local)} visitas</p><p>📱 Clics a mi WhatsApp: ${local.whatsappClicks || 0}</p><p>Categoría: ${local.categoria} · Estado: ${local.estado}</p>${local.estado==='DEUDA'?'<p class="text-red-400">⚠️ Deuda pendiente</p>':''}</div>
+    <div class="glass p-5"><h3 class="text-lg font-bold mb-4">✏️ Editar mi local</h3><form id="formOwnerEdit" onsubmit="guardarOwnerEdit(event)" class="space-y-3">
+        <input type="hidden" id="ownerStoreId" value="${local.id}">
+        <input type="text" id="ownerName" value="${local.nombre}" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="ownerRubro" value="${local.rubro}" class="w-full bg-slate-700 rounded-lg p-2" placeholder="Rubro">
+        <input type="text" id="ownerHorario" value="${local.horario}" class="w-full bg-slate-700 rounded-lg p-2" placeholder="Horario">
+        <input type="text" id="ownerException" value="${local.excepcionHorario||''}" class="w-full bg-slate-700 rounded-lg p-2" placeholder="Excepción de hoy">
+        <input type="text" id="ownerPhone" value="${local.telefono||''}" class="w-full bg-slate-700 rounded-lg p-2" placeholder="Teléfono WhatsApp">
+        <input type="text" id="ownerFoto" value="${local.foto}" class="w-full bg-slate-700 rounded-lg p-2" placeholder="Foto URL o emoji">
+        <input type="file" id="ownerFotoFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        <div><label class="block">Productos</label><p class="text-xs text-slate-400">Administra productos desde la pantalla de tu local (botón "+ Agregar Producto").</p></div>
+        ${local.estado !== 'DEUDA' ? `<button type="submit" class="btn-oro w-full py-2 rounded-xl">Guardar cambios</button>` : '<p class="text-red-400">No puedes editar mientras tengas deuda.</p>'}
+    </form></div>`;
+}
+function guardarOwnerEdit(e) {
+    e.preventDefault();
+    const local = obtenerLocalActual();
+    local.nombre = document.getElementById('ownerName').value.trim();
+    local.rubro = document.getElementById('ownerRubro').value.trim();
+    local.horario = document.getElementById('ownerHorario').value.trim();
+    local.excepcionHorario = document.getElementById('ownerException').value.trim();
+    local.telefono = document.getElementById('ownerPhone').value.trim();
+    let foto = document.getElementById('ownerFoto').value.trim();
+    const file = document.getElementById('ownerFotoFile').files[0];
+    if (file) convertirImagenABase64(file, (base64) => { local.foto = base64; guardarYActualizar(); });
+    else { local.foto = foto; guardarYActualizar(); }
+    function guardarYActualizar() { guardarDatos(); agregarHistorial(`Dueño editó local`); toast('✅ Actualizado'); renderOwnerPanel(); }
+}
+
+// ======================== CRUD COMPLETO ========================
+function abrirModalPais(editId = null) {
+    const pais = editId ? datos.paises.find(p => p.id === editId) : null;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">${pais?'Editar':'Nuevo'} País</h3>
+    <form onsubmit="guardarPais(event, '${editId||''}')" class="space-y-3">
+        <input type="text" id="paisNombre" value="${pais?.nombre||''}" placeholder="Nombre" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="paisBandera" value="${pais?.bandera||''}" placeholder="URL bandera" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="file" id="paisBanderaFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        <div class="flex gap-2"><button type="submit" class="btn-oro flex-1 py-2 rounded-xl">Guardar</button><button type="button" onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>
+    </form>`;
+    mostrarModal('modalCRUD');
+}
+function guardarPais(e, id) { e.preventDefault(); const nombre = document.getElementById('paisNombre').value.trim(); let bandera = document.getElementById('paisBandera').value.trim(); const file = document.getElementById('paisBanderaFile').files[0]; if (file) convertirImagenABase64(file, (base64) => { bandera = base64; guardarPaisFinal(id, nombre, bandera); }); else guardarPaisFinal(id, nombre, bandera); }
+function guardarPaisFinal(id, nombre, bandera) { if (id) { let p = datos.paises.find(p => p.id === id); if(p) { p.nombre = nombre; if(bandera) p.bandera = bandera; } } else datos.paises.push({ id: 'pais_'+Date.now(), nombre, bandera, ciudades: [], visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }] }); guardarDatos(); cerrarModal('modalCRUD'); volverAInicio(); toast('País guardado'); }
+function eliminarPais(id) { if(confirm('¿Eliminar país y todo?')) { datos.paises = datos.paises.filter(p => p.id !== id); guardarDatos(); volverAInicio(); toast('Eliminado'); } }
+
+function abrirModalCiudad(editId = null) {
+    const pais = obtenerPaisActual();
+    const ciudad = editId ? pais.ciudades.find(c => c.id === editId) : null;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">${ciudad?'Editar':'Nueva'} Ciudad</h3>
+    <form onsubmit="guardarCiudad(event, '${editId||''}')" class="space-y-3">
+        <input type="text" id="ciudadNombre" value="${ciudad?.nombre||''}" placeholder="Nombre" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="ciudadDesc" value="${ciudad?.descripcion||''}" placeholder="Descripción" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="ciudadFoto" value="${ciudad?.foto||''}" placeholder="URL foto" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="file" id="ciudadFotoFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        <div class="flex gap-2"><button type="submit" class="btn-oro flex-1 py-2 rounded-xl">Guardar</button><button type="button" onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>
+    </form>`;
+    mostrarModal('modalCRUD');
+}
+function guardarCiudad(e, id) { e.preventDefault(); const nombre = document.getElementById('ciudadNombre').value.trim(); const desc = document.getElementById('ciudadDesc').value.trim(); let foto = document.getElementById('ciudadFoto').value.trim(); const file = document.getElementById('ciudadFotoFile').files[0]; const pais = obtenerPaisActual(); if (file) convertirImagenABase64(file, (base64) => { foto = base64; guardarCiudadFinal(id, nombre, desc, foto); }); else guardarCiudadFinal(id, nombre, desc, foto); }
+function guardarCiudadFinal(id, nombre, desc, foto) { const pais = obtenerPaisActual(); if (id) { let c = pais.ciudades.find(c => c.id === id); if(c) { c.nombre = nombre; c.descripcion = desc; if(foto) c.foto = foto; } } else pais.ciudades.push({ id: 'ciudad_'+Date.now(), nombre, descripcion: desc, foto, centros: [], visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }] }); guardarDatos(); cerrarModal('modalCRUD'); renderPaises(); toast('Ciudad guardada'); }
+function eliminarCiudad(id) { if(confirm('¿Eliminar ciudad y sus centros?')) { let pais = obtenerPaisActual(); pais.ciudades = pais.ciudades.filter(c => c.id !== id); guardarDatos(); renderPaises(); toast('Eliminada'); } }
+
+function abrirModalCentro(editId = null) {
+    const ciudad = obtenerCiudadActual();
+    const centro = editId ? ciudad.centros.find(c => c.id === editId) : null;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">${centro?'Editar':'Nuevo'} Centro</h3>
+    <form onsubmit="guardarCentro(event, '${editId||''}')" class="space-y-3">
+        <input type="text" id="centroNombre" value="${centro?.nombre||''}" placeholder="Nombre" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="centroDesc" value="${centro?.descripcion||''}" placeholder="Descripción" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="centroFoto" value="${centro?.foto||''}" placeholder="URL foto" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="file" id="centroFotoFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        <div class="flex gap-2"><button type="submit" class="btn-oro flex-1 py-2 rounded-xl">Guardar</button><button type="button" onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>
+    </form>`;
+    mostrarModal('modalCRUD');
+}
+function guardarCentro(e, id) { e.preventDefault(); const nombre = document.getElementById('centroNombre').value.trim(); const desc = document.getElementById('centroDesc').value.trim(); let foto = document.getElementById('centroFoto').value.trim(); const file = document.getElementById('centroFotoFile').files[0]; const ciudad = obtenerCiudadActual(); if (file) convertirImagenABase64(file, (base64) => { foto = base64; guardarCentroFinal(id, nombre, desc, foto); }); else guardarCentroFinal(id, nombre, desc, foto); }
+function guardarCentroFinal(id, nombre, desc, foto) { const ciudad = obtenerCiudadActual(); if (id) { let ce = ciudad.centros.find(c => c.id === id); if(ce) { ce.nombre = nombre; ce.descripcion = desc; if(foto) ce.foto = foto; } } else ciudad.centros.push({ id: 'centro_'+Date.now(), nombre, descripcion: desc, foto, publicidad: [
+    { id:'pub1', imagen:'', textoAlt:'Espacio publicitario 1', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub2', imagen:'', textoAlt:'Espacio publicitario 2', tipo:'texto', activo:true, enlace:'' },
+    { id:'pub3', imagen:'', textoAlt:'Espacio publicitario 3', tipo:'texto', activo:true, enlace:'' }
+], locales: [], visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }] }); guardarDatos(); cerrarModal('modalCRUD'); renderCiudades(); toast('Centro guardado'); }
+function eliminarCentro(id) { if(confirm('¿Eliminar centro y sus locales?')) { let ciudad = obtenerCiudadActual(); ciudad.centros = ciudad.centros.filter(c => c.id !== id); guardarDatos(); renderCiudades(); toast('Eliminado'); } }
+
+function abrirModalLocal(editId = null) {
+    const centro = obtenerCentroActual();
+    const local = editId ? centro.locales.find(l => l.id === editId) : null;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">${local?'Editar':'Nuevo'} Local</h3>
+    <form onsubmit="guardarLocal(event, '${editId||''}')" class="space-y-3">
+        <input type="text" id="localNombre" value="${local?.nombre||''}" placeholder="Nombre" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="localRubro" value="${local?.rubro||''}" placeholder="Rubro" class="w-full bg-slate-700 rounded-lg p-2">
+        <select id="localCategoria" class="w-full bg-slate-700 rounded-lg p-2"><option value="PREMIUM" ${local?.categoria==='PREMIUM'?'selected':''}>PREMIUM</option><option value="ESTANDAR" ${local?.categoria==='ESTANDAR'?'selected':''}>ESTÁNDAR</option></select>
+        <select id="localEstado" class="w-full bg-slate-700 rounded-lg p-2"><option value="AL_DIA" ${local?.estado==='AL_DIA'?'selected':''}>AL DÍA</option><option value="DEUDA" ${local?.estado==='DEUDA'?'selected':''}>DEUDA</option><option value="VACANTE" ${local?.estado==='VACANTE'?'selected':''}>VACANTE</option><option value="BLOQUEADO" ${local?.estado==='BLOQUEADO'?'selected':''}>BLOQUEADO</option></select>
+        <input type="text" id="localHorario" value="${local?.horario||''}" placeholder="Horario" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="date" id="localVencimiento" value="${local?.fechaVencimiento||''}" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="localTelefono" value="${local?.telefono||''}" placeholder="Teléfono" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="localFoto" value="${local?.foto||''}" placeholder="Foto URL" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="file" id="localFotoFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        ${!editId ? `<div class="border-t pt-2"><input type="text" id="nuevoDocumento" placeholder="Documento (para llave)" class="w-full bg-slate-700 rounded-lg p-2 mb-2" required><input type="text" id="nuevoDueño" placeholder="Nombre del dueño" class="w-full bg-slate-700 rounded-lg p-2"></div>` : ''}
+        <div class="flex gap-2"><button type="submit" class="btn-oro flex-1 py-2 rounded-xl">Guardar</button><button type="button" onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>
+    </form>`;
+    mostrarModal('modalCRUD');
+}
+function guardarLocal(e, id) { e.preventDefault(); const centro = obtenerCentroActual(); const nombre = document.getElementById('localNombre').value.trim(); const rubro = document.getElementById('localRubro').value.trim(); const categoria = document.getElementById('localCategoria').value; const estado = document.getElementById('localEstado').value; const horario = document.getElementById('localHorario').value.trim(); const vencimiento = document.getElementById('localVencimiento').value; const telefono = document.getElementById('localTelefono').value.trim(); let foto = document.getElementById('localFoto').value.trim(); const file = document.getElementById('localFotoFile').files[0]; if (file) convertirImagenABase64(file, (base64) => { foto = base64; guardarLocalFinal(); }); else guardarLocalFinal(); function guardarLocalFinal() { if (id) { let l = centro.locales.find(l => l.id === id); if (l) { l.nombre = nombre; l.rubro = rubro; l.categoria = categoria; l.estado = estado; l.horario = horario; l.fechaVencimiento = vencimiento; l.telefono = telefono; if(foto) l.foto = foto; } } else { const documento = document.getElementById('nuevoDocumento').value.trim(); const dueño = document.getElementById('nuevoDueño').value.trim(); if (!documento) { toast('Documento obligatorio'); return; } const llave = generarLlaveUnica(centro.nombre, documento); centro.locales.push({ id: 'local_'+Date.now(), nombre, rubro, categoria, estado, llave, dueño, foto, horario, fechaVencimiento: vencimiento, abierto: true, visitasTotales: 0, visitasDiarias: [{ fecha: hoyStr(), count: 0 }], telefono, whatsappClicks: 0, productos: [] }); toast(`Local creado. Llave: ${llave}`); } guardarDatos(); cerrarModal('modalCRUD'); renderLocales(); } }
+function eliminarLocal(id) { if(confirm('¿Eliminar local?')) { let centro = obtenerCentroActual(); centro.locales = centro.locales.filter(l => l.id !== id); guardarDatos(); renderLocales(); toast('Eliminado'); } }
+
+function abrirModalProducto(editId = null) {
+    const local = obtenerLocalActual();
+    const prod = editId ? local.productos.find(p => p.id === editId) : null;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">${prod?'Editar':'Nuevo'} Producto</h3>
+    <form onsubmit="guardarProducto(event, '${editId||''}')" class="space-y-3">
+        <input type="text" id="prodNombre" value="${prod?.nombre||''}" placeholder="Nombre" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="prodDesc" value="${prod?.descripcion||''}" placeholder="Descripción" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="number" id="prodPrecio" value="${prod?.precio||0}" placeholder="Precio (Gs)" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="prodCategoria" value="${prod?.categoria||''}" placeholder="Categoría" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="prodImagen" value="${prod?.imagen||''}" placeholder="URL imagen o emoji" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="file" id="prodImagenFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        <div class="flex gap-2"><button type="submit" class="btn-oro flex-1 py-2 rounded-xl">Guardar</button><button type="button" onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>
+    </form>`;
+    mostrarModal('modalCRUD');
+}
+function guardarProducto(e, id) { e.preventDefault(); const local = obtenerLocalActual(); const nombre = document.getElementById('prodNombre').value.trim(); const desc = document.getElementById('prodDesc').value.trim(); const precio = parseInt(document.getElementById('prodPrecio').value) || 0; const categoria = document.getElementById('prodCategoria').value.trim(); let imagen = document.getElementById('prodImagen').value.trim(); const file = document.getElementById('prodImagenFile').files[0]; if (file) convertirImagenABase64(file, (base64) => { imagen = base64; guardar(); }); else guardar(); function guardar() { if (id) { let p = local.productos.find(p => p.id === id); if (p) { p.nombre = nombre; p.descripcion = desc; p.precio = precio; p.categoria = categoria; if(imagen) p.imagen = imagen; } } else { local.productos.push({ id: 'prod_'+Date.now(), nombre, descripcion: desc, precio, categoria, imagen }); } guardarDatos(); cerrarModal('modalCRUD'); renderProductos(); toast('Producto guardado'); } }
+function eliminarProducto(id) { if(confirm('¿Eliminar producto?')) { let local = obtenerLocalActual(); local.productos = local.productos.filter(p => p.id !== id); guardarDatos(); renderProductos(); toast('Eliminado'); } }
+
+function abrirModalLocalPropio() {
+    const local = obtenerLocalActual();
+    const hoy = new Date().toISOString().split('T')[0];
+    const tieneEx = local.excepcionFecha === hoy;
+    const modal = document.getElementById('modalCRUDContent');
+    modal.innerHTML = `<h3 class="text-oro text-xl font-bold mb-4">✏️ Editar mi local</h3>
+    <form onsubmit="guardarLocalPropio(event)" class="space-y-3">
+        <input type="text" id="propNombre" value="${local.nombre}" class="w-full bg-slate-700 rounded-lg p-2" required>
+        <input type="text" id="propRubro" value="${local.rubro}" class="w-full bg-slate-700 rounded-lg p-2">
+        <select id="propCategoria" class="w-full bg-slate-700 rounded-lg p-2"><option value="PREMIUM" ${local.categoria==='PREMIUM'?'selected':''}>PREMIUM</option><option value="ESTANDAR" ${local.categoria==='ESTANDAR'?'selected':''}>ESTÁNDAR</option></select>
+        <input type="text" id="propHorario" value="${local.horario}" placeholder="Horario" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="propTelefono" value="${local.telefono||''}" placeholder="Teléfono" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="text" id="propFoto" value="${local.foto}" placeholder="Foto URL" class="w-full bg-slate-700 rounded-lg p-2">
+        <input type="file" id="propFotoFile" accept="image/*" class="w-full bg-slate-700 p-1 rounded">
+        <div class="border-t pt-2"><p class="text-oro">Excepción para hoy (${hoy})</p><label><input type="checkbox" id="propCerradoHoy" ${tieneEx && local.excepcionCerrado ? 'checked' : ''}> Cerrado hoy</label><input type="text" id="propHorarioHoy" placeholder="Horario especial" value="${tieneEx && !local.excepcionCerrado ? (local.excepcionHorario||'') : ''}" class="w-full bg-slate-700 rounded-lg p-2 mt-2"></div>
+        <div class="flex gap-2"><button type="submit" class="btn-oro flex-1 py-2 rounded-xl">Guardar</button><button type="button" onclick="cerrarModal('modalCRUD')" class="bg-slate-600 flex-1 py-2 rounded-xl">Cancelar</button></div>
+    </form>`;
+    mostrarModal('modalCRUD');
+}
+function guardarLocalPropio(e) { e.preventDefault(); const local = obtenerLocalActual(); local.nombre = document.getElementById('propNombre').value.trim(); local.rubro = document.getElementById('propRubro').value.trim(); local.categoria = document.getElementById('propCategoria').value; local.horario = document.getElementById('propHorario').value.trim(); local.telefono = document.getElementById('propTelefono').value.trim(); let foto = document.getElementById('propFoto').value.trim(); const file = document.getElementById('propFotoFile').files[0]; const hoy = new Date().toISOString().split('T')[0]; const cerrado = document.getElementById('propCerradoHoy').checked; const horarioHoy = document.getElementById('propHorarioHoy').value.trim(); if (file) convertirImagenABase64(file, (base64) => { local.foto = base64; guardar(); }); else { local.foto = foto; guardar(); } function guardar() { if (cerrado || horarioHoy) { local.excepcionFecha = hoy; local.excepcionCerrado = cerrado; local.excepcionHorario = horarioHoy; } else { delete local.excepcionFecha; delete local.excepcionCerrado; delete local.excepcionHorario; } guardarDatos(); cerrarModal('modalCRUD'); renderProductos(); toast('Local actualizado'); } }
+
+function ejecutarConfirmacion() { if (window._confirmAction) window._confirmAction(); window._confirmAction = null; cerrarModal('modalConfirm'); }
+
+// ======================== INICIALIZACIÓN ========================
+function init() {
+    if (!localStorage.getItem('golcentral_datos')) guardarDatos();
+    else cargarDatos();
+    cargarCarrito();
+    const urlParams = new URLSearchParams(window.location.search);
+    const localId = urlParams.get('local');
+    if (localId) {
+        for(let p of datos.paises) for(let c of p.ciudades) for(let ce of c.centros) for(let l of ce.locales) {
+            if (l.id === localId) { navegacion = { paisId: p.id, ciudadId: c.id, centroId: ce.id, localId }; renderProductos(); return; }
+        }
+    }
+    volverAInicio();
+    document.querySelectorAll('input[type="file"][accept*="image"]').forEach(input => {
+        if (!input.hasAttribute('capture')) {
+            input.setAttribute('capture', 'environment');
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', init);
+
+// ======================== BANNER DE ESCASEZ ========================
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', insertarBanner);
+    } else {
+        insertarBanner();
+    }
+    function insertarBanner() {
+        if (document.getElementById('bannerEscasez')) return;
+        const banner = document.createElement('div');
+        banner.id = 'bannerEscasez';
+        banner.style.cssText = `
+            position: sticky;
+            top: 0;
+            z-index: 60;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-bottom: 2px solid #fbbf24;
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fcd34d;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 20px rgba(251,191,36,0.3);
+        `;
+        banner.innerHTML = `
+            <span><i class="fas fa-trophy" style="margin-right:8px;"></i> <span id="cuposTexto">20 cupos GRATIS por 2 meses</span> — <span id="cuposContador">Quedan 20/20</span></span>
+            <button id="btnReclamarCupo" style="background:#f59e0b;border:none;color:#1a1a2e;padding:4px 16px;border-radius:30px;font-weight:bold;cursor:pointer;transition:0.2s;">Reclamo mi cupo</button>
+        `;
+        const header = document.querySelector('header');
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(banner, header.nextSibling);
+        } else {
+            document.body.prepend(banner);
+        }
+        let cupos = parseInt(localStorage.getItem('golcentral_cupos')) || 20;
+        function actualizarBanner() {
+            const contador = document.getElementById('cuposContador');
+            const texto = document.getElementById('cuposTexto');
+            const btn = document.getElementById('btnReclamarCupo');
+            if (cupos > 0) {
+                contador.textContent = `Quedan ${cupos}/20`;
+                texto.textContent = '20 cupos GRATIS por 2 meses';
+                btn.style.display = 'inline-block';
+                btn.disabled = false;
+            } else {
+                contador.textContent = 'Cupos agotados';
+                texto.textContent = 'Próxima apertura pronto';
+                btn.style.display = 'none';
+            }
+        }
+        document.getElementById('btnReclamarCupo').addEventListener('click', function() {
+            if (cupos <= 0) {
+                toast('⚠️ Ya no quedan cupos disponibles.');
+                return;
+            }
+            const nombreNegocio = prompt('Ingrese el nombre de su local para reservar el cupo:');
+            if (!nombreNegocio || nombreNegocio.trim() === '') return;
+            cupos--;
+            localStorage.setItem('golcentral_cupos', cupos);
+            actualizarBanner();
+            const mensaje = `📢 SOLICITUD DE CUPO GRATIS: ${nombreNegocio.trim()}`;
+            if (typeof abrirWhatsAppReal === 'function') {
+                abrirWhatsAppReal(numeroWhatsAppAdmin || '+5491123726100', mensaje);
+            } else {
+                alert('Cupo reservado. Contacte al administrador por WhatsApp.');
+            }
+        });
+        actualizarBanner();
+    }
+})();
+
+</script>
+</body>
+</html>
